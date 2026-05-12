@@ -1,3 +1,4 @@
+
 from __future__ import annotations
 
 import os
@@ -125,8 +126,8 @@ if ld_ok:
 # PAGE CONFIG
 # ══════════════════════════════════════════════════════════════════════════
 st.set_page_config(
-    page_title="Acme Corp · LaunchDarkly Demo",
-    page_icon="🚩",
+    page_title="Pulse · LaunchDarkly Demo",
+    page_icon="🏋️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -141,6 +142,57 @@ st.markdown("""
 html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif; }
 #MainMenu, footer, header { visibility: hidden; }
 .block-container { padding-top: 1.2rem; padding-bottom: 2rem; }
+
+/* ── Force dark mode globally — independent of .streamlit/config.toml ── */
+html, body                                       { background-color:#0a0a14 !important; color:#e2e8f0; }
+.stApp                                           { background-color:#0a0a14 !important; color:#e2e8f0; }
+[data-testid="stAppViewContainer"]               { background-color:#0a0a14 !important; }
+[data-testid="stHeader"]                         { background-color:rgba(10,10,20,0.7) !important; }
+.main, .block-container, section.main            { background-color:transparent !important; color:#e2e8f0; }
+
+/* Default body text on the dark page */
+.main p, .main span, .main li, .main label,
+.main h1, .main h2, .main h3, .main h4, .main h5, .main h6,
+.stMarkdown, .stMarkdown p                       { color:#e2e8f0; }
+
+/* Streamlit captions kept secondary but readable */
+[data-testid="stCaptionContainer"] p,
+.stCaption                                       { color:#94a3b8 !important; }
+
+/* Streamlit form inputs — dark surfaces with light text */
+.stTextInput input, .stTextArea textarea,
+.stNumberInput input, .stDateInput input,
+.stTimeInput input                               { background-color:#1a1a2e !important; color:#e2e8f0 !important;
+                                                    border:1px solid #2d2d50 !important; }
+.stTextInput input::placeholder,
+.stTextArea textarea::placeholder                { color:#64748b !important; }
+.stSelectbox > div > div                         { background-color:#1a1a2e !important; color:#e2e8f0 !important;
+                                                    border-color:#2d2d50 !important; }
+.stRadio label, .stCheckbox label,
+.stTextInput label, .stSelectbox label,
+.stForm label                                    { color:#cbd5e1 !important; }
+
+/* Streamlit buttons */
+.stButton > button, .stFormSubmitButton > button { background-color:#4f46e5 !important; color:white !important;
+                                                    border:none !important; }
+.stButton > button:hover,
+.stFormSubmitButton > button:hover               { background-color:#4338ca !important; }
+
+/* Streamlit metric component */
+[data-testid="stMetricValue"]                    { color:#e2e8f0 !important; }
+[data-testid="stMetricLabel"]                    { color:#94a3b8 !important; }
+[data-testid="stMetricDelta"]                    { color:#4ade80 !important; }
+
+/* Tabs */
+button[data-baseweb="tab"]                       { color:#94a3b8 !important; }
+button[data-baseweb="tab"][aria-selected="true"] { color:#e2e8f0 !important; }
+
+/* Dividers */
+hr                                               { border-color:#1a1a30 !important; }
+
+/* Streamlit alert variants */
+.stAlert                                         { background-color:#0e0e1c !important; border:1px solid #2d2d50 !important;
+                                                    color:#e2e8f0 !important; }
 
 [data-testid="stSidebar"] { background: #0c0c18 !important; border-right: 1px solid #1a1a30; }
 
@@ -180,9 +232,9 @@ html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif; }
 
 .hero-old { background:#09090f;border:1px dashed #1e1e2e;border-radius:16px;
             padding:36px 40px;margin-bottom:16px; }
-.hero-old h2 { font-size:24px;font-weight:600;color:#cbd5e1;margin:0 0 8px; }
-.hero-old p  { font-size:13px;color:#94a3b8;margin:0 0 14px; }
-.hero-old .tag { font-family:'JetBrains Mono',monospace;font-size:10px;color:#64748b;
+.hero-old h2 { font-size:24px;font-weight:600;color:#e2e8f0;margin:0 0 8px; }
+.hero-old p  { font-size:13px;color:#cbd5e1;margin:0 0 14px; }
+.hero-old .tag { font-family:'JetBrains Mono',monospace;font-size:10px;color:#94a3b8;
                  letter-spacing:.1em;text-transform:uppercase;margin-bottom:12px; }
 
 .metric-row { display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px; }
@@ -252,6 +304,31 @@ html, body, [class*="css"] { font-family: 'Plus Jakarta Sans', sans-serif; }
     font-size:11px;color:#64748b;margin-bottom:6px;
 }
 .changelog b { color:#a5b4fc; }
+
+/* ── Architecture tab — topology diagrams + comparison tables ── */
+.topology       { display:flex;flex-direction:column;align-items:center;
+                  background:#070710;border:1px solid #1a1a30;border-radius:14px;
+                  padding:24px;margin:12px 0; }
+.topology-row   { display:flex;gap:10px;justify-content:center;flex-wrap:wrap;width:100%; }
+.topology-node  { background:#0f0f24;border:1px solid #2d2d50;border-radius:10px;
+                  padding:12px 18px;font-size:12px;color:#c7d2fe;
+                  font-family:'JetBrains Mono',monospace;text-align:center;min-width:90px; }
+.topology-node.ld    { background:linear-gradient(135deg,#1a1060,#3730a3);
+                       border-color:#6366f1;color:white;font-weight:700;
+                       padding:14px 28px;font-size:14px; }
+.topology-node.relay { background:#0d2918;border-color:#22c55e;color:#86efac;font-weight:700; }
+.topology-label { color:#64748b;font-size:11px;font-family:'JetBrains Mono',monospace;margin:8px 0; }
+
+.compare-table        { width:100%;border-collapse:separate;border-spacing:0;
+                        background:#0a0a18;border:1px solid #1a1a30;border-radius:10px;
+                        overflow:hidden;font-size:13px;margin-top:6px; }
+.compare-table th     { background:#0c0c1e;color:#a5b4fc;font-family:'JetBrains Mono',monospace;
+                        font-size:11px;text-transform:uppercase;letter-spacing:.08em;
+                        padding:10px 14px;text-align:left;border-bottom:1px solid #1a1a30; }
+.compare-table td     { padding:10px 14px;color:#cbd5e1;border-bottom:1px solid #1a1a30; }
+.compare-table tr:last-child td { border-bottom:none; }
+.compare-table td.attr{ color:#94a3b8;font-family:'JetBrains Mono',monospace;
+                        font-size:12px;width:30%; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -305,8 +382,7 @@ with st.sidebar:
         st.markdown('<div class="pill-on"><span class="dot-on"></span>LD Connected</div>', unsafe_allow_html=True)
     else:
         st.markdown('<div class="pill-off"><span class="dot-off"></span>LD Disconnected</div>', unsafe_allow_html=True)
-    st.markdown(f'<div style="margin-top:8px;font-size:11px;color:#64748b;font-family:\'JetBrains Mono\',monospace;">sdk · {LD_SDK_KEY[:18]}…</div>', unsafe_allow_html=True)
-    st.markdown(f'<div style="font-size:11px;color:#64748b;font-family:\'JetBrains Mono\',monospace;">session · {ss.session_id}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="margin-top:8px;font-size:11px;color:#64748b;font-family:\'JetBrains Mono\',monospace;">session · {ss.session_id}</div>', unsafe_allow_html=True)
 
     st.divider()
     # ── LIVE STREAMING (non-blocking, via streamlit-autorefresh) ─────────
@@ -347,7 +423,24 @@ context = (
 # EVALUATE ALL FLAGS  (locally in-memory, <5ms)
 # ══════════════════════════════════════════════════════════════════════════
 show_hero     = ld.variation(FLAG_HERO,     context, False)
-show_checkout = ld.variation(FLAG_CHECKOUT, context, False)
+
+# For the checkout flag we want the *full evaluation detail* — not just the
+# value — so the Part 2 rules panel can show LD's ACTUAL reason for serving
+# what it served (target match, rule match, fallthrough, off, etc.) rather
+# than re-deriving it from hardcoded conditions in this file.
+_checkout_detail = ld.variation_detail(FLAG_CHECKOUT, context, False)
+show_checkout    = _checkout_detail.value
+
+def _reason_kind(d):
+    r = getattr(d, "reason", None) or {}
+    return r.get("kind") if isinstance(r, dict) else getattr(r, "kind", None)
+def _reason_index(d):
+    r = getattr(d, "reason", None) or {}
+    return r.get("ruleIndex") if isinstance(r, dict) else getattr(r, "rule_index", None)
+
+checkout_reason_kind  = _reason_kind(_checkout_detail)
+checkout_reason_index = _reason_index(_checkout_detail)
+
 banner_text   = ld.variation(FLAG_BANNER,   context, "")
 
 current_flags = {
@@ -377,9 +470,9 @@ col_logo, col_user = st.columns([3, 1])
 with col_logo:
     st.markdown("""
     <div style='margin-bottom:2px;'>
-        <span style='font-size:24px;font-weight:800;color:#e2e8f0;'>Acme Corp</span>
+        <span style='font-size:24px;font-weight:800;color:#e2e8f0;'>Pulse</span>
         <span style='font-size:13px;color:#94a3b8;margin-left:12px;
-                     font-family:"JetBrains Mono",monospace;'>· Product Platform</span>
+                     font-family:"JetBrains Mono",monospace;'>· Fitness Performance Platform</span>
     </div>
     """, unsafe_allow_html=True)
 with col_user:
@@ -428,11 +521,12 @@ st.divider()
 # ══════════════════════════════════════════════════════════════════════════
 # TABS
 # ══════════════════════════════════════════════════════════════════════════
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "⚡ Part 1 — Release & Remediate",
     "🎯 Part 2 — Target",
     "🧪 Part 3 — Bonus",
     "🔍 Flag Inspector",
+    "🏗️ Architecture",
 ])
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -466,13 +560,13 @@ with tab1:
         if show_hero:
             st.markdown("""
             <div class="hero-new">
-                <div class="tag">✦ NEW RELEASE — Acme Platform 3.0</div>
-                <h2>Ship faster.<br/>Break nothing.</h2>
-                <p>Real-time feature control for modern engineering teams.<br/>
-                Release to anyone. Roll back in seconds. Zero redeployment.</p>
+                <div class="tag">✦ NEW — AI Personal Trainer</div>
+                <h2>Train smarter.<br/>Push harder. Recover better.</h2>
+                <p>Workouts that adapt to your performance in real time.<br/>
+                Built for athletes. Trusted by gyms. Loved by trainers.</p>
                 <div style='display:flex;gap:12px;flex-wrap:wrap;'>
                     <div style='background:#4f46e5;color:#fff;border-radius:8px;
-                                padding:9px 20px;font-size:13px;font-weight:600;'>Get Started →</div>
+                                padding:9px 20px;font-size:13px;font-weight:600;'>Start Free Trial →</div>
                     <div style='border:1px solid #1e293b;color:#475569;border-radius:8px;
                                 padding:9px 20px;font-size:13px;'>Watch Demo</div>
                 </div>
@@ -482,21 +576,21 @@ with tab1:
             st.caption("Toggle the flag OFF in LaunchDarkly → instant rollback, zero redeploy.")
             st.markdown("""
             <div class="metric-row">
-                <div class="metric-box"><div class="m-val">$2.4M</div><div class="m-lbl">Monthly Revenue</div><div class="m-pos">↑ 18%</div></div>
-                <div class="metric-box"><div class="m-val">98.4%</div><div class="m-lbl">Uptime SLA</div><div class="m-pos">↑ 0.4%</div></div>
-                <div class="metric-box"><div class="m-val">47</div><div class="m-lbl">Deploys Today</div><div class="m-pos">↑ 12</div></div>
-                <div class="metric-box"><div class="m-val">0</div><div class="m-lbl">Incidents</div><div class="m-pos">↓ 3 vs last wk</div></div>
+                <div class="metric-box"><div class="m-val">184k</div><div class="m-lbl">Active Members</div><div class="m-pos">↑ 18%</div></div>
+                <div class="metric-box"><div class="m-val">4.9★</div><div class="m-lbl">Avg. Plan Rating</div><div class="m-pos">↑ 0.3</div></div>
+                <div class="metric-box"><div class="m-val">47k</div><div class="m-lbl">Workouts Today</div><div class="m-pos">↑ 12%</div></div>
+                <div class="metric-box"><div class="m-val">+72</div><div class="m-lbl">Member NPS</div><div class="m-pos">↑ 4 vs last wk</div></div>
             </div>
             """, unsafe_allow_html=True)
         else:
             st.markdown("""
             <div class="hero-old">
-                <div class="tag">Legacy · Acme Platform 2.x</div>
-                <h2>Acme Corp Dashboard</h2>
-                <p>Welcome back. Your workspace is ready.</p>
-                <div style='background:#111118;border:1px solid #1a1a2a;border-radius:6px;
-                            padding:8px 14px;display:inline-block;font-size:13px;color:#64748b;'>
-                    Go to Dashboard
+                <div class="tag">Legacy · Pulse 2.x</div>
+                <h2>Pulse Dashboard</h2>
+                <p>Welcome back. Your workouts are ready.</p>
+                <div style='background:#1a1a30;border:1px solid #2d2d50;border-radius:6px;
+                            padding:8px 14px;display:inline-block;font-size:13px;color:#cbd5e1;'>
+                    View Workouts
                 </div>
             </div>
             """, unsafe_allow_html=True)
@@ -504,9 +598,9 @@ with tab1:
             st.caption("Toggle the flag ON in LaunchDarkly to release the new version instantly.")
             st.markdown("""
             <div class="metric-row">
-                <div class="metric-box dim"><div class="m-val">$2.4M</div><div class="m-lbl">Revenue</div></div>
-                <div class="metric-box dim"><div class="m-val">98.4%</div><div class="m-lbl">Uptime</div></div>
-                <div class="metric-box dim"><div class="m-val">47</div><div class="m-lbl">Deploys</div></div>
+                <div class="metric-box dim"><div class="m-val">184k</div><div class="m-lbl">Members</div></div>
+                <div class="metric-box dim"><div class="m-val">4.9★</div><div class="m-lbl">Rating</div></div>
+                <div class="metric-box dim"><div class="m-val">47k</div><div class="m-lbl">Workouts</div></div>
             </div>
             """, unsafe_allow_html=True)
 
@@ -592,31 +686,31 @@ with tab2:
             <div class="checkout-new">
                 <div style='font-size:10px;font-weight:700;color:#6366f1;letter-spacing:.12em;
                             text-transform:uppercase;font-family:"JetBrains Mono",monospace;margin-bottom:14px;'>
-                    ✦ Redesigned Checkout · {user_tier.upper()}
+                    ✦ Redesigned Signup · {user_tier.upper()}
                 </div>
-                <div style='font-size:22px;font-weight:700;color:#e2e8f0;margin-bottom:6px;'>Complete Your Order</div>
-                <div style='font-size:13px;color:#94a3b8;margin-bottom:22px;'>Streamlined for a faster, secure purchase experience.</div>
+                <div style='font-size:22px;font-weight:700;color:#e2e8f0;margin-bottom:6px;'>Activate Premium Membership</div>
+                <div style='font-size:13px;color:#94a3b8;margin-bottom:22px;'>Unlimited AI-personalised workouts · Cancel anytime.</div>
             </div>
             """, unsafe_allow_html=True)
-            st.markdown(f'<div class="pill-on"><span class="dot-on"></span>{FLAG_CHECKOUT} = TRUE · targeting rule matched for {user_key}</div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="pill-on"><span class="dot-on"></span>{FLAG_CHECKOUT} = TRUE · LD evaluated to new signup for {user_key}</div>', unsafe_allow_html=True)
             st.markdown("<br>", unsafe_allow_html=True)
             with st.form("checkout_new"):
                 c1, c2 = st.columns(2)
                 c1.text_input("First name", placeholder="Alex")
                 c2.text_input("Last name",  placeholder="Chen")
-                st.text_input("Email", placeholder="alex@acmecorp.com")
+                st.text_input("Email", placeholder="alex@pulsefit.com")
                 c3, c4, c5 = st.columns([2,1,1])
                 c3.text_input("Card number", placeholder="4242 4242 4242 4242")
                 c4.text_input("Expiry",      placeholder="MM/YY")
                 c5.text_input("CVV",         placeholder="•••", type="password")
-                st.checkbox("Save payment details for next time")
-                if st.form_submit_button("Complete Purchase →", use_container_width=True):
+                st.checkbox("Save card for monthly billing")
+                if st.form_submit_button("Start Premium Membership →", use_container_width=True):
                     # ─── Experiment metric (Part 3): track the conversion ───
                     # This is what feeds an LD Experiment on `checkout-redesign`.
                     ld.track(METRIC_PURCHASE, context, metric_value=1.0)
                     ss.conv_events += 1
                     st.success(
-                        f"✅ Order confirmed (demo). Event `{METRIC_PURCHASE}` "
+                        f"✅ Membership activated (demo). Event `{METRIC_PURCHASE}` "
                         f"sent to LD — feeds the experiment in Part 3."
                     )
         else:
@@ -624,13 +718,13 @@ with tab2:
             <div class="checkout-old">
                 <div style='font-size:10px;font-weight:700;color:#1a1a2e;letter-spacing:.12em;
                             text-transform:uppercase;font-family:"JetBrains Mono",monospace;margin-bottom:14px;'>
-                    Legacy Checkout
+                    Legacy Signup
                 </div>
-                <div style='font-size:20px;font-weight:600;color:#64748b;margin-bottom:18px;'>Checkout</div>
+                <div style='font-size:20px;font-weight:600;color:#64748b;margin-bottom:18px;'>Sign Up</div>
             </div>
             """, unsafe_allow_html=True)
-            st.markdown(f'<div class="pill-off"><span class="dot-off"></span>{FLAG_CHECKOUT} = FALSE · no rule matched → default served</div>', unsafe_allow_html=True)
-            st.caption(f"User `{user_key}` did not match any targeting rule — legacy checkout served.")
+            st.markdown(f'<div class="pill-off"><span class="dot-off"></span>{FLAG_CHECKOUT} = FALSE · LD evaluated to legacy for {user_key}</div>', unsafe_allow_html=True)
+            st.caption(f"User `{user_key}` got the legacy signup form.")
             st.markdown("<br>", unsafe_allow_html=True)
             with st.form("checkout_old"):
                 st.text_input("Email address")
@@ -640,29 +734,55 @@ with tab2:
                     # Track the conversion against the control variation too.
                     ld.track(METRIC_PURCHASE, context, metric_value=1.0)
                     ss.conv_events += 1
-                    st.success(f"Order placed. Event `{METRIC_PURCHASE}` sent (control variation).")
+                    st.success(f"Submitted. Event `{METRIC_PURCHASE}` sent (control variation).")
 
     with col_rules:
-        individual_targets = ["alice", "carol"]
-        is_individual = user_key in individual_targets
-        is_enterprise = user_tier == "enterprise"
-        is_beta       = user_beta
+        # ── Drive the highlighting from LD's *actual* evaluation reason ──
+        # variation_detail returns reasons like:
+        #   {kind: "TARGET_MATCH"}                 → individual targets matched
+        #   {kind: "RULE_MATCH", ruleIndex: N}     → custom rule N matched
+        #   {kind: "FALLTHROUGH"}                  → no rule matched, default served
+        #   {kind: "OFF"}                          → targeting toggle is OFF
+        #   {kind: "ERROR", errorKind: ...}        → SDK could not evaluate
+        matched_card = None
+        if checkout_reason_kind == "TARGET_MATCH":
+            matched_card = "individual"
+        elif checkout_reason_kind == "RULE_MATCH":
+            matched_card = f"rule{checkout_reason_index}"
+        elif checkout_reason_kind == "FALLTHROUGH":
+            matched_card = "default"
+        elif checkout_reason_kind == "OFF":
+            matched_card = "off"
 
-        st.markdown("""<div class="card-accent"><div style='font-size:10px;font-weight:700;color:#a5b4fc;letter-spacing:.1em;text-transform:uppercase;font-family:"JetBrains Mono",monospace;margin-bottom:14px;'>Targeting Rules (mirror of LD dashboard)</div>""", unsafe_allow_html=True)
+        st.markdown("""<div class="card-accent"><div style='font-size:10px;font-weight:700;color:#a5b4fc;letter-spacing:.1em;text-transform:uppercase;font-family:"JetBrains Mono",monospace;margin-bottom:14px;'>Targeting Rules · live from LD</div>""", unsafe_allow_html=True)
 
-        for rnum, rtitle, rbody, matched in [
-            ("Individual", "Specific user keys",
-             f"Serve TRUE to: <code style='color:#818cf8;'>alice</code>, <code style='color:#818cf8;'>carol</code><br/><span style='font-size:11px;color:#64748b;'>Internal QA / pilot users</span>",
-             is_individual),
-            ("Rule 1", "tier = enterprise",
-             "IF <code style='color:#818cf8;'>tier</code> = <code style='color:#a78bfa;'>\"enterprise\"</code> → TRUE",
-             is_enterprise),
-            ("Rule 2", "betaTester = true",
-             "IF <code style='color:#818cf8;'>betaTester</code> = <code style='color:#a78bfa;'>true</code> → TRUE",
-             is_beta),
+        if matched_card == "off":
+            st.markdown(f"""
+            <div class="rule" style='border-color:#f59e0b;background:#1a1305;'>
+                <div class="rule-num" style='color:#fbbf24;'>⚠ Targeting OFF</div>
+                <div class="rule-body" style='color:#fde68a;'>
+                  The flag's targeting toggle is OFF in LD — none of the rules below
+                  are evaluated. Currently serving the off-variation:
+                  <code>{show_checkout}</code>.
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        for slot, rnum, rtitle, rbody in [
+            ("individual", "Individual", "Specific user keys",
+             "Serve TRUE to: <code style='color:#818cf8;'>alice</code>, <code style='color:#818cf8;'>carol</code><br/>"
+             "<span style='font-size:11px;color:#64748b;'>Internal QA / pilot users</span>"),
+            ("rule0",      "Rule 1", "tier = enterprise",
+             "IF <code style='color:#818cf8;'>tier</code> = <code style='color:#a78bfa;'>\"enterprise\"</code> → TRUE"),
+            ("rule1",      "Rule 2", "betaTester = true",
+             "IF <code style='color:#818cf8;'>betaTester</code> = <code style='color:#a78bfa;'>true</code> → TRUE"),
         ]:
-            cls    = "rule matched" if matched else "rule"
-            result = f'<div class="rule-match">✓ MATCHED → serves TRUE</div>' if matched else f'<div class="rule-miss">— no match, falls through</div>'
+            is_match = (slot == matched_card)
+            cls    = "rule matched" if is_match else "rule"
+            served = "TRUE" if show_checkout else "FALSE"
+            result = (f'<div class="rule-match">✓ MATCHED — LD served {served}</div>'
+                      if is_match else
+                      '<div class="rule-miss">— not matched by LD</div>')
             st.markdown(f"""
             <div class="{cls}">
                 <div class="rule-num">{rnum} · {rtitle}</div>
@@ -671,16 +791,33 @@ with tab2:
             </div>
             """, unsafe_allow_html=True)
 
-        any_matched = is_individual or is_enterprise or is_beta
-        def_result  = '<div class="rule-miss">skipped — rule matched above</div>' if any_matched \
-                      else '<div class="rule-match" style="color:#f87171;">↓ DEFAULT → serves FALSE</div>'
+        # Default rule card — also driven by LD's reason
+        is_default = (matched_card == "default")
+        default_served = "TRUE" if show_checkout else "FALSE"
+        default_colour = "#4ade80" if show_checkout else "#f87171"
+        def_result = (f'<div class="rule-match" style="color:{default_colour};">'
+                      f'↓ FALLTHROUGH — LD served {default_served}</div>'
+                      if is_default else
+                      '<div class="rule-miss">skipped — a rule above matched</div>')
+        def_cls = "rule matched" if is_default else "rule"
         st.markdown(f"""
-        <div class="rule" style='border-color:#111120;'>
-            <div class="rule-num" style='color:#64748b;'>Default Rule · Fallback</div>
-            <div class="rule-body">All other users → FALSE (legacy checkout)</div>
+        <div class="{def_cls}" style='border-color:#1f2937;'>
+            <div class="rule-num" style='color:#94a3b8;'>Default Rule · Fallthrough</div>
+            <div class="rule-body">Everyone else → whatever the default rule serves in LD</div>
             {def_result}
-        </div></div>
+        </div>
         """, unsafe_allow_html=True)
+
+        # Honest debug line — surfaces mismatches between what the panel
+        # mirrors and what LD actually did (e.g. a percentage rollout, an
+        # unexpected rule, or targeting being toggled off).
+        st.caption(
+            f"LD evaluation reason: `{checkout_reason_kind}`"
+            + (f" · rule index `{checkout_reason_index}`" if checkout_reason_index is not None else "")
+            + f" · value `{show_checkout}`"
+        )
+
+        st.markdown("</div>", unsafe_allow_html=True)
 
     st.divider()
     st.markdown('<div class="chip">📋 CONTEXT · Sent to LD on every flag evaluation</div>', unsafe_allow_html=True)
@@ -701,37 +838,6 @@ with tab2:
         </div>
         """, unsafe_allow_html=True)
 
-    st.divider()
-    st.markdown('<div class="chip">📊 PROGRESSIVE DELIVERY · Percentage Rollout</div>', unsafe_allow_html=True)
-    st.markdown(f"""
-    <div class="card" style='margin-bottom:12px;'>
-        <div style='font-size:13px;color:#94a3b8;line-height:1.8;'>
-            Set the <strong style='color:#c7d2fe;'>Default Rule</strong> on
-            <code style='color:#818cf8;'>{FLAG_CHECKOUT}</code> to
-            <strong style='color:#c7d2fe;'>Percentage Rollout</strong>:
-            <code style='color:#4ade80;'>50% TRUE · 50% FALSE</code>.
-            LD uses a <strong style='color:#c7d2fe;'>deterministic hash</strong> of the user key —
-            the same user always lands in the same bucket.
-            Switch users in the sidebar to observe different experiences.
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    users_list = ["alice","bob","carol","dave","eve","guest-9923"]
-    cols = st.columns(len(users_list))
-    for i, u in enumerate(users_list):
-        is_me  = u == user_key
-        border = "#4f46e5" if is_me else "#1a1a2e"
-        uc     = "#818cf8" if is_me else "#2d2d50"
-        fw     = "700"     if is_me else "400"
-        cols[i].markdown(f"""
-        <div style='text-align:center;background:#09090f;border:1px solid {border};
-                    border-radius:10px;padding:12px 6px;'>
-            <div style='font-size:16px;margin-bottom:5px;'>{"🟣" if is_me else "⚫"}</div>
-            <div style='font-size:11px;color:{uc};font-family:"JetBrains Mono",monospace;font-weight:{fw};'>{u}</div>
-            <div style='font-size:10px;color:#1a1a2e;margin-top:4px;'>50/50</div>
-        </div>
-        """, unsafe_allow_html=True)
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -870,7 +976,7 @@ ld.track(<br/>
         with col_a1:
             st.markdown(f"""
             <div class="card-accent" style='margin-bottom:16px;'>
-                <div style='font-size:16px;font-weight:700;color:#e2e8f0;margin-bottom:6px;'>AI Support Assistant</div>
+                <div style='font-size:16px;font-weight:700;color:#e2e8f0;margin-bottom:6px;'>AI Fitness Coach</div>
                 <div style='font-size:13px;color:#94a3b8;line-height:1.6;'>
                     Model, system prompt, and temperature are controlled by an LD AI Config —
                     not hardcoded here. Change them in the LD dashboard → takes effect instantly.<br/><br/>
@@ -1311,3 +1417,268 @@ with tab4:
 <span style='color:#94a3b8;'># 5. Next evaluation immediately uses the new rule</span>
     </div>
     """, unsafe_allow_html=True)
+
+
+# ──────────────────────────────────────────────────────────────────────────
+# ARCHITECTURE — Client vs Server SDKs · Microservices · Relay Proxy
+# Conceptual tab that pre-answers the "but what about at scale?" question
+# every VP of Engineering asks within 90 seconds of seeing the demo.
+# ──────────────────────────────────────────────────────────────────────────
+with tab5:
+    st.markdown('<div class="chip">🏗️ ARCHITECTURE · How this scales beyond a single app</div>', unsafe_allow_html=True)
+
+    arch_a, arch_b, arch_c = st.tabs([
+        "SDKs · Client vs Server",
+        "Microservices fan-out",
+        "Relay Proxy",
+    ])
+
+    # ── Sub-tab A: Client-side vs Server-side SDKs ────────────────────
+    with arch_a:
+        st.markdown("""
+        <div class="card-accent" style='margin-bottom:14px;'>
+            <div style='font-size:13px;color:#cbd5e1;line-height:1.7;'>
+                Same LaunchDarkly project, same flag definitions — but the SDK pattern
+                changes depending on where the flag is evaluated.
+                <strong>Server-side</strong> pulls all rules into process memory and
+                evaluates locally; fast and secure, but rule definitions sit on the box.
+                <strong>Client-side</strong> requests a single user's evaluated values
+                from LD's edge — the browser bundle never sees rule names like
+                <code style='color:#818cf8;'>"enterprise-pricing-rule"</code>.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("""
+            <div class="card" style='height:100%;'>
+                <div style='font-size:11px;color:#a5b4fc;letter-spacing:.1em;
+                            text-transform:uppercase;font-family:"JetBrains Mono",monospace;
+                            margin-bottom:8px;'>Server-side SDK</div>
+                <div style='font-size:18px;font-weight:700;color:#e2e8f0;margin-bottom:8px;'>Backend services</div>
+                <div style='font-size:12px;color:#cbd5e1;line-height:1.6;margin-bottom:12px;'>
+                    Python, Java, Go, Node, .NET, Ruby. <strong>What this demo uses.</strong><br/><br/>
+                    <strong>Auth:</strong> SDK Key — treated like a database password<br/>
+                    <strong>Rules:</strong> all rules cached in process memory<br/>
+                    <strong>Latency:</strong> &lt;5 ms per evaluation (in-memory)
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            st.markdown("""
+            <div class="mono" style='font-size:11px;margin-top:10px;'>
+<span style='color:#94a3b8;'># Python — what this demo uses</span><br/>
+ldclient.set_config(Config(<span style='color:#fbbf24;'>LD_SDK_KEY</span>))<br/>
+ld = ldclient.get()<br/>
+<br/>
+context = Context.builder(<span style='color:#fbbf24;'>"alice"</span>)<br/>
+&nbsp;&nbsp;.set(<span style='color:#a5b4fc;'>"tier"</span>, <span style='color:#fbbf24;'>"free"</span>).build()<br/>
+<br/>
+show = ld.variation(<br/>
+&nbsp;&nbsp;<span style='color:#a5b4fc;'>"new-hero-banner"</span>, context, <span style='color:#f87171;'>False</span>)
+            </div>
+            """, unsafe_allow_html=True)
+
+        with c2:
+            st.markdown("""
+            <div class="card" style='height:100%;'>
+                <div style='font-size:11px;color:#a5b4fc;letter-spacing:.1em;
+                            text-transform:uppercase;font-family:"JetBrains Mono",monospace;
+                            margin-bottom:8px;'>Client-side SDK</div>
+                <div style='font-size:18px;font-weight:700;color:#e2e8f0;margin-bottom:8px;'>Browsers &amp; mobile apps</div>
+                <div style='font-size:12px;color:#cbd5e1;line-height:1.6;margin-bottom:12px;'>
+                    JavaScript, React, iOS, Android, Flutter, React Native.<br/><br/>
+                    <strong>Auth:</strong> Client-side ID — safe to expose in a JS bundle<br/>
+                    <strong>Rules:</strong> only this user's evaluated values, never rule definitions<br/>
+                    <strong>Latency:</strong> &lt;30 ms cold; instant after init
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            st.markdown("""
+            <div class="mono" style='font-size:11px;margin-top:10px;'>
+<span style='color:#94a3b8;'>// JavaScript — what a browser app uses</span><br/>
+const ld = LDClient.initialize(<br/>
+&nbsp;&nbsp;<span style='color:#fbbf24;'>"CLIENT_SIDE_ID"</span>,<br/>
+&nbsp;&nbsp;{ kind:<span style='color:#fbbf24;'>"user"</span>, key:<span style='color:#fbbf24;'>"alice"</span>,<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;tier:<span style='color:#fbbf24;'>"free"</span> });<br/>
+<br/>
+ld.on(<span style='color:#fbbf24;'>"ready"</span>, () =&gt; {<br/>
+&nbsp;&nbsp;const show = ld.variation(<br/>
+&nbsp;&nbsp;&nbsp;&nbsp;<span style='color:#a5b4fc;'>"new-hero-banner"</span>, <span style='color:#f87171;'>false</span>);<br/>
+});
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("**Side-by-side comparison**")
+        st.markdown("""
+        <table class="compare-table">
+            <tr><th>Attribute</th><th>Server-side SDK</th><th>Client-side SDK</th></tr>
+            <tr><td class="attr">Auth credential</td><td>SDK Key (secret)</td><td>Client-side ID (public)</td></tr>
+            <tr><td class="attr">Rule data on device</td><td>All rules in memory</td><td>Only this user's evaluated values</td></tr>
+            <tr><td class="attr">Why the distinction</td><td>Backend is trusted; bandwidth is fine</td><td>Don't leak rule names; keep bundle small</td></tr>
+            <tr><td class="attr">Connection</td><td>Streaming SSE</td><td>Streaming SSE (or polling on cellular)</td></tr>
+            <tr><td class="attr">When to use</td><td>Backend services, batch jobs, cron</td><td>Browser, mobile, IoT, edge</td></tr>
+        </table>
+        """, unsafe_allow_html=True)
+
+    # ── Sub-tab B: Microservices fan-out ──────────────────────────────
+    with arch_b:
+        st.markdown("""
+        <div class="card-accent" style='margin-bottom:14px;'>
+            <div style='font-size:13px;color:#cbd5e1;line-height:1.7;'>
+                Pulse runs 50+ microservices in production: auth, billing, checkout,
+                workout generation, email, notifications, search. Each one runs its own
+                LaunchDarkly SDK instance — same flag keys, same context shape, same
+                one-line evaluation. Toggle a flag once in LD and
+                <strong>every service receives the update via streaming SSE in under
+                200 ms.</strong> No redeploy, no cascade, no service-by-service rollout.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class="topology">
+            <div class="topology-row">
+                <div class="topology-node">Auth</div>
+                <div class="topology-node">Billing</div>
+                <div class="topology-node">Checkout</div>
+                <div class="topology-node">Workouts</div>
+                <div class="topology-node">Notifications</div>
+            </div>
+            <div class="topology-label">↓ &nbsp;each service holds its own streaming SDK connection &nbsp;↓</div>
+            <div class="topology-node ld">LaunchDarkly · single source of truth</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        c1, c2 = st.columns([3, 2])
+        with c1:
+            st.markdown("**The code in every one of those services is identical:**")
+            st.markdown("""
+            <div class="mono">
+ldclient.set_config(Config(<span style='color:#fbbf24;'>LD_SDK_KEY</span>))<br/>
+context = Context.builder(user_id)<br/>
+&nbsp;&nbsp;.set(<span style='color:#a5b4fc;'>"tier"</span>, tier).build()<br/>
+<br/>
+<span style='color:#94a3b8;'># Same flag, same answer, in every service —</span><br/>
+<span style='color:#94a3b8;'># LD guarantees consistency across the fleet.</span><br/>
+show = ld.variation(<span style='color:#a5b4fc;'>"new-hero-banner"</span>, context, <span style='color:#f87171;'>False</span>)
+            </div>
+            """, unsafe_allow_html=True)
+        with c2:
+            st.markdown("""
+            <div class="card" style='height:100%;'>
+                <div style='font-size:11px;color:#a5b4fc;letter-spacing:.1em;
+                            text-transform:uppercase;font-family:"JetBrains Mono",monospace;
+                            margin-bottom:8px;'>Demo talking points</div>
+                <ul style='font-size:12px;color:#cbd5e1;line-height:1.7;padding-left:18px;margin:0;'>
+                    <li>Same SDK pattern in every language we use</li>
+                    <li>Consistency: one flag value across 50 services</li>
+                    <li>Propagation: ≤200 ms via SSE streaming</li>
+                    <li>Resilience: each service caches rules locally; LD outage = features freeze, never break</li>
+                    <li>Audit: every flag change attributes to a user across the whole estate</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # ── Sub-tab C: Relay Proxy ────────────────────────────────────────
+    with arch_c:
+        st.markdown("""
+        <div class="card-accent" style='margin-bottom:14px;'>
+            <div style='font-size:13px;color:#cbd5e1;line-height:1.7;'>
+                The <strong>LaunchDarkly Relay Proxy</strong> is a small Go service you
+                run inside your own infrastructure. It aggregates the streaming connection
+                to LD so your N microservice instances all talk to the Relay instead of
+                the LD edge. Optional — but worth deploying once you hit one of three
+                triggers below.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("**Three reasons teams deploy the Relay Proxy:**")
+        r1, r2, r3 = st.columns(3)
+        for col, icon, title, body in [
+            (r1, "📉", "Egress reduction",
+             "500 services × 1 connection each = 500 outbound connections. With Relay it's 1. Significant cost saver at scale."),
+            (r2, "🔒", "Data residency",
+             "Some regulators require flag-evaluation traffic to stay inside your VPC. Relay sits in your network; your services never call app.launchdarkly.com directly."),
+            (r3, "⚡", "Cold-start speed",
+             "New service pods initialise from a hot in-network Relay in &lt;100 ms instead of pulling the full ruleset from LD's edge."),
+        ]:
+            with col:
+                st.markdown(f"""
+                <div class="card" style='height:100%;'>
+                    <div style='font-size:24px;margin-bottom:6px;'>{icon}</div>
+                    <div style='font-size:13px;font-weight:700;color:#c7d2fe;margin-bottom:6px;'>{title}</div>
+                    <div style='font-size:12px;color:#cbd5e1;line-height:1.6;'>{body}</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+        st.markdown("**Before vs after:**")
+        b1, b2 = st.columns(2)
+        with b1:
+            st.markdown("""
+            <div class="topology">
+                <div style='font-size:11px;color:#f87171;font-family:"JetBrains Mono",monospace;
+                            letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;'>
+                    Direct · N outbound connections
+                </div>
+                <div class="topology-row">
+                    <div class="topology-node">Svc 1</div>
+                    <div class="topology-node">Svc 2</div>
+                    <div class="topology-node">Svc 3</div>
+                    <div class="topology-node">...</div>
+                    <div class="topology-node">Svc N</div>
+                </div>
+                <div class="topology-label">↓ &nbsp;N independent streaming connections &nbsp;↓</div>
+                <div class="topology-node ld">LaunchDarkly (external)</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with b2:
+            st.markdown("""
+            <div class="topology">
+                <div style='font-size:11px;color:#4ade80;font-family:"JetBrains Mono",monospace;
+                            letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;'>
+                    Via Relay · 1 outbound connection
+                </div>
+                <div class="topology-row">
+                    <div class="topology-node">Svc 1</div>
+                    <div class="topology-node">Svc 2</div>
+                    <div class="topology-node">Svc 3</div>
+                    <div class="topology-node">...</div>
+                    <div class="topology-node">Svc N</div>
+                </div>
+                <div class="topology-label">↓ &nbsp;internal traffic only &nbsp;↓</div>
+                <div class="topology-node relay">LD Relay Proxy<br/><span style='font-size:10px;font-weight:400;'>in your VPC</span></div>
+                <div class="topology-label">↓ &nbsp;1 outbound connection &nbsp;↓</div>
+                <div class="topology-node ld">LaunchDarkly (external)</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("**The code change to point services at the Relay — one line:**")
+        st.markdown("""
+        <div class="mono">
+<span style='color:#94a3b8;'># Before — direct to LD's edge</span><br/>
+ldclient.set_config(Config(LD_SDK_KEY))<br/>
+<br/>
+<span style='color:#94a3b8;'># After — through the Relay in your VPC</span><br/>
+ldclient.set_config(Config(<br/>
+&nbsp;&nbsp;LD_SDK_KEY,<br/>
+&nbsp;&nbsp;stream_uri=<span style='color:#fbbf24;'>"https://relay.internal.pulse-prod"</span>,<br/>
+&nbsp;&nbsp;events_uri=<span style='color:#fbbf24;'>"https://relay.internal.pulse-prod"</span><br/>
+))
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown("""
+        <div class="card" style='margin-top:18px;border-color:#f59e0b44;'>
+            <div style='font-size:11px;color:#fbbf24;letter-spacing:.1em;
+                        text-transform:uppercase;font-family:"JetBrains Mono",monospace;
+                        margin-bottom:8px;'>When you don't need the Relay</div>
+            <div style='font-size:12px;color:#cbd5e1;line-height:1.6;'>
+                If you run fewer than ~50 SDK instances total, you don't have data
+                residency requirements, and cold-start latency isn't a pain point —
+                <strong>just connect direct.</strong> Don't add operational complexity
+                you don't need.
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
