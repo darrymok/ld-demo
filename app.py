@@ -1,3 +1,40 @@
+"""
+╔══════════════════════════════════════════════════════════════════════╗
+║   LaunchDarkly SE Technical Exercise — Darryl Mok · APJ FY27        ║
+║   Pulse · Fitness Performance Platform                                ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  SETUP:                                                              ║
+║    pip install -r requirements.txt                                   ║
+║    export LD_SDK_KEY="sdk-your-key-here"        ← REPLACE THIS       ║
+║    export OPENAI_API_KEY="sk-..."               ← optional, Part 3   ║
+║    streamlit run app.py                                              ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  FLAGS TO CREATE IN YOUR LD PROJECT (Test environment):              ║
+║    new-hero-banner     Boolean   Part 1 — Release & Remediate        ║
+║    checkout-redesign   Boolean   Part 2 — Targeting + Part 3 Expt    ║
+║    promotional-banner  String    Part 2 — String-flag demo           ║
+║    support-assistant   AI Config Part 3 — AI Configs (optional)      ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  TRIGGER SETUP (Part 1 Remediate):                                   ║
+║    LD Dashboard → new-hero-banner → Triggers tab                     ║
+║    → Add trigger → Generic trigger → copy URL → run:                 ║
+║    curl -X POST "<your-trigger-url>"                                 ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  TARGETING RULES (Part 2 — checkout-redesign):                       ║
+║    Individual targets: alice, carol                                  ║
+║    Rule 1: IF tier = "enterprise" → TRUE                             ║
+║    Rule 2: IF betaTester = true → TRUE                               ║
+║    Default rule: FALSE                                               ║
+║  STRING FLAG (promotional-banner):                                   ║
+║    Rule: IF tier = "free" → "Upgrade to Pro — ship 9x faster!"       ║
+║    Default: "" (empty string)                                        ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  EXPERIMENT METRIC (Part 3 bonus):                                   ║
+║    Create custom metric "purchase-clicked" (numeric, sum)            ║
+║    Create experiment on checkout-redesign with that metric           ║
+║    This app emits ld.track("purchase-clicked", ctx, metric_value)    ║
+╚══════════════════════════════════════════════════════════════════════╝
+"""
 
 from __future__ import annotations
 
@@ -23,7 +60,7 @@ except ImportError:
 # ── Optional AI SDK (Part 3 bonus) ────────────────────────────────────────
 try:
     from ldai.client import LDAIClient
-    import requests
+    import openai
     from types import SimpleNamespace
     AI_AVAILABLE = True
 except ImportError:
@@ -33,35 +70,8 @@ except ImportError:
 # CONFIGURATION
 # ← Set LD_SDK_KEY as an env var or replace the string below directly
 # ══════════════════════════════════════════════════════════════════════════
-LD_SDK_KEY          = os.environ.get("LD_SDK_KEY", "YOUR_SDK_KEY_HERE")  # ← REPLACE
-PLURALSIGHT_API_KEY = os.environ.get("PLURALSIGHT_API_KEY", "")          # ← Pluralsight Sandbox token
-
-# ─── Pluralsight AI Sandbox — model slug → endpoint URL ────────────────────
-# In your LD AI Config, set the `model` field to one of the keys below.
-# Swapping a user from Claude → GPT-4o → Gemini is then a one-click change
-# in the LD dashboard, no code redeploy.
-PLURALSIGHT_ENDPOINTS = {
-    # Anthropic family (via Bedrock)
-    "claude-45-opus":      "https://labs.pluralsight.com/labs-ai-proxy/rest/bedrock/anthropic/claude-45-opus",
-    "claude-45-sonnet":    "https://labs.pluralsight.com/labs-ai-proxy/rest/bedrock/anthropic/claude-45-sonnet",
-    "claude-4-sonnet":     "https://labs.pluralsight.com/labs-ai-proxy/rest/bedrock/anthropic/claude-4-sonnet",
-    "claude-45-haiku":     "https://labs.pluralsight.com/labs-ai-proxy/rest/bedrock/anthropic/claude-45-haiku",
-    # OpenAI family (via Azure)
-    "chatgpt-4o":          "https://labs.pluralsight.com/labs-ai-proxy/rest/openai/chatgpt-4o/v1/chat/completions",
-    "chatgpt-5-mini":      "https://labs.pluralsight.com/labs-ai-proxy/rest/openai/chatgpt-5/v1/chat/completions",
-    # Google family
-    "gemini-25-flash":     "https://labs.pluralsight.com/labs-ai-proxy/rest/gemini/Flash-25",
-    "gemini-25-flash-lite":"https://labs.pluralsight.com/labs-ai-proxy/rest/gemini/Flash-Lite-25",
-    # Others (Bedrock-routed)
-    "cohere-command-r":    "https://labs.pluralsight.com/labs-ai-proxy/rest/bedrock/cohere/command-text-r",
-    "jamba-mini":          "https://labs.pluralsight.com/labs-ai-proxy/rest/bedrock/ai21/jamba-mini",
-    "llama-3-8b":          "https://labs.pluralsight.com/labs-ai-proxy/rest/bedrock/meta/llama2-13b-chat-v1",
-    "llama-33-70b":        "https://labs.pluralsight.com/labs-ai-proxy/rest/bedrock/meta/llama-33",
-    "mistral-large-3":     "https://labs.pluralsight.com/labs-ai-proxy/rest/bedrock/mistral-ai/mistral-large-3",
-    "mistral-small":       "https://labs.pluralsight.com/labs-ai-proxy/rest/bedrock/mistral-ai/mistral-small",
-    "amazon-nova-2-lite":  "https://labs.pluralsight.com/labs-ai-proxy/rest/bedrock/amazon/nova-2-lite",
-}
-PLURALSIGHT_DEFAULT_SLUG = "claude-4-sonnet"   # only slug with a verified working example in the docs
+LD_SDK_KEY     = os.environ.get("LD_SDK_KEY", "YOUR_SDK_KEY_HERE")  # ← REPLACE
+OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")               # ← Optional, for Part 3 AI tab
 
 # Flag keys — must match what you create in your LaunchDarkly project
 FLAG_HERO      = "new-hero-banner"      # Part 1: Boolean
@@ -87,7 +97,7 @@ def init_ld():
 
 @st.cache_resource
 def init_ai(_ld):
-    if AI_AVAILABLE and PLURALSIGHT_API_KEY:
+    if AI_AVAILABLE and OPENAI_API_KEY:
         return LDAIClient(_ld)
     return None
 
@@ -304,31 +314,6 @@ hr                                               { border-color:#1a1a30 !importa
     font-size:11px;color:#64748b;margin-bottom:6px;
 }
 .changelog b { color:#a5b4fc; }
-
-/* ── Architecture tab — topology diagrams + comparison tables ── */
-.topology       { display:flex;flex-direction:column;align-items:center;
-                  background:#070710;border:1px solid #1a1a30;border-radius:14px;
-                  padding:24px;margin:12px 0; }
-.topology-row   { display:flex;gap:10px;justify-content:center;flex-wrap:wrap;width:100%; }
-.topology-node  { background:#0f0f24;border:1px solid #2d2d50;border-radius:10px;
-                  padding:12px 18px;font-size:12px;color:#c7d2fe;
-                  font-family:'JetBrains Mono',monospace;text-align:center;min-width:90px; }
-.topology-node.ld    { background:linear-gradient(135deg,#1a1060,#3730a3);
-                       border-color:#6366f1;color:white;font-weight:700;
-                       padding:14px 28px;font-size:14px; }
-.topology-node.relay { background:#0d2918;border-color:#22c55e;color:#86efac;font-weight:700; }
-.topology-label { color:#64748b;font-size:11px;font-family:'JetBrains Mono',monospace;margin:8px 0; }
-
-.compare-table        { width:100%;border-collapse:separate;border-spacing:0;
-                        background:#0a0a18;border:1px solid #1a1a30;border-radius:10px;
-                        overflow:hidden;font-size:13px;margin-top:6px; }
-.compare-table th     { background:#0c0c1e;color:#a5b4fc;font-family:'JetBrains Mono',monospace;
-                        font-size:11px;text-transform:uppercase;letter-spacing:.08em;
-                        padding:10px 14px;text-align:left;border-bottom:1px solid #1a1a30; }
-.compare-table td     { padding:10px 14px;color:#cbd5e1;border-bottom:1px solid #1a1a30; }
-.compare-table tr:last-child td { border-bottom:none; }
-.compare-table td.attr{ color:#94a3b8;font-family:'JetBrains Mono',monospace;
-                        font-size:12px;width:30%; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -521,12 +506,11 @@ st.divider()
 # ══════════════════════════════════════════════════════════════════════════
 # TABS
 # ══════════════════════════════════════════════════════════════════════════
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4 = st.tabs([
     "⚡ Part 1 — Release & Remediate",
     "🎯 Part 2 — Target",
     "🧪 Part 3 — Bonus",
     "🔍 Flag Inspector",
-    "🏗️ Architecture",
 ])
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -982,21 +966,23 @@ ld.track(<br/>
                     not hardcoded here. Change them in the LD dashboard → takes effect instantly.<br/><br/>
                     User <strong style='color:#818cf8;'>{user_key}</strong>
                     (tier: <strong style='color:#a78bfa;'>{user_tier}</strong>) →
-                    {"<strong style='color:#4ade80;'>claude-4-sonnet (enterprise variation)</strong>" if user_tier == "enterprise"
-                     else "<strong style='color:#64748b;'>chatgpt-4o (standard variation)</strong>"}
+                    {"<strong style='color:#4ade80;'>gpt-4o (enterprise variation)</strong>" if user_tier == "enterprise"
+                     else "<strong style='color:#64748b;'>gpt-4o-mini (standard variation)</strong>"}
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
             if not AI_AVAILABLE:
-                st.warning("AI SDK not installed. Run: `pip install launchdarkly-server-sdk-ai requests`")
-            elif not PLURALSIGHT_API_KEY:
-                st.warning("Set `PLURALSIGHT_API_KEY` environment variable to enable the live AI demo.")
+                st.warning("AI SDK not installed. Run: `pip install launchdarkly-server-sdk-ai openai`")
+            elif not OPENAI_API_KEY:
+                st.warning("Set `OPENAI_API_KEY` environment variable to enable the live AI demo.")
             else:
                 user_q = st.text_input("Ask the assistant:", placeholder="e.g. How do I add a team member?")
                 if st.button("Send →") and user_q:
-                    with st.spinner("Calling AI via LD AI Config → Pluralsight Sandbox..."):
+                    with st.spinner("Calling OpenAI via LD AI Config..."):
                         try:
+                            oai = openai.OpenAI(api_key=OPENAI_API_KEY)
+
                             # ── Build the default config defensively. The LD AI SDK
                             # has reshuffled both the import path AND the
                             # AIConfig constructor signature across releases.
@@ -1018,11 +1004,10 @@ ld.track(<br/>
 
                             fallback = None
                             if _AIConfig and _ModelConfig:
-                                # Build a model object — try kwarg, fall back to positional
                                 _model_obj = None
                                 for _make in (
-                                    lambda: _ModelConfig(name=PLURALSIGHT_DEFAULT_SLUG),
-                                    lambda: _ModelConfig(PLURALSIGHT_DEFAULT_SLUG),
+                                    lambda: _ModelConfig(name="gpt-4o-mini"),
+                                    lambda: _ModelConfig("gpt-4o-mini"),
                                 ):
                                     try:
                                         _model_obj = _make()
@@ -1031,7 +1016,6 @@ ld.track(<br/>
                                         continue
 
                                 if _model_obj is not None:
-                                    # Try a handful of known AIConfig signatures.
                                     for _make in (
                                         lambda: _AIConfig(enabled=False, model=_model_obj, messages=[]),
                                         lambda: _AIConfig(enabled=False, model=_model_obj, prompt=[]),
@@ -1064,7 +1048,7 @@ ld.track(<br/>
 
                                 fallback = _AIDict(
                                     enabled=False,
-                                    model=_AIDict(name=PLURALSIGHT_DEFAULT_SLUG),
+                                    model=_AIDict(name="gpt-4o-mini"),
                                     messages=[],
                                     _ldMeta=_AIDict(enabled=False),
                                 )
@@ -1105,21 +1089,16 @@ ld.track(<br/>
                                 else (ai_config.get("_ldMeta", {}) or {}).get("enabled", False)
                                      if isinstance(ai_config, dict) else False
                             )
-                            model_field = _get(ai_config, "model", "model", PLURALSIGHT_DEFAULT_SLUG)
+                            model_field = _get(ai_config, "model", "model", "gpt-4o-mini")
                             ld_messages = _get(ai_config, "messages", "messages", []) or []
 
                             # `model` may be a ModelConfig object, a dict, or a plain string.
                             if hasattr(model_field, "name"):
-                                model_slug = model_field.name
+                                model_used = model_field.name
                             elif isinstance(model_field, dict):
-                                model_slug = model_field.get("name", PLURALSIGHT_DEFAULT_SLUG)
+                                model_used = model_field.get("name", "gpt-4o-mini")
                             else:
-                                model_slug = model_field
-
-                            # Resolve the Pluralsight endpoint URL for this slug.
-                            endpoint = PLURALSIGHT_ENDPOINTS.get(
-                                model_slug, PLURALSIGHT_ENDPOINTS[PLURALSIGHT_DEFAULT_SLUG]
-                            )
+                                model_used = model_field
 
                             # Each message may be an LDMessage object or a dict — normalise.
                             def _msg(m):
@@ -1127,120 +1106,79 @@ ld.track(<br/>
                                     return m.get("role"), m.get("content")
                                 return getattr(m, "role", None), getattr(m, "content", None)
 
-                            # ── Flatten LD-managed messages into a single prompt string
-                            # (Pluralsight Sandbox takes `{"prompt": "..."}`, not a
-                            # structured messages array).
+                            # ── Build the OpenAI messages array.
+                            # OpenAI takes system/user/assistant messages natively, so
+                            # we keep the LD-managed messages as-is and append the new
+                            # user turn at the end.
                             if enabled:
-                                system_prompt = "You are a helpful support assistant."
-                                prior_turns = []
+                                messages, has_system = [], False
                                 for m in ld_messages:
                                     role, content = _msg(m)
-                                    if role == "system":
-                                        system_prompt = content or system_prompt
-                                    elif role in ("user","assistant"):
-                                        prior_turns.append(f"{role.capitalize()}: {content}")
-                                blocks = [f"[System]\n{system_prompt}"]
-                                if prior_turns:
-                                    blocks.append("[Prior conversation]\n" + "\n".join(prior_turns))
-                                blocks.append(f"[User question]\n{user_q}")
-                                prompt_text = "\n\n".join(blocks)
+                                    if role in ("system","user","assistant") and content:
+                                        messages.append({"role": role, "content": content})
+                                        if role == "system":
+                                            has_system = True
+                                if not has_system:
+                                    messages.insert(0, {"role":"system","content":"You are a helpful support assistant."})
+                                messages.append({"role":"user","content":user_q})
                             else:
-                                system_prompt = "You are a concise support assistant. Keep answers under 3 sentences."
-                                prompt_text = f"[System]\n{system_prompt}\n\n[User question]\n{user_q}"
+                                messages = [
+                                    {"role":"system","content":"You are a concise support assistant. Keep answers under 3 sentences."},
+                                    {"role":"user","content":user_q},
+                                ]
 
-                            # ── The actual HTTP call to the Pluralsight Sandbox.
+                            # ── The actual OpenAI call.
                             t0 = time.time()
-                            r = requests.post(
-                                endpoint,
-                                headers={
-                                    "Authorization": f"Bearer {PLURALSIGHT_API_KEY}",
-                                    "Content-Type":  "application/json",
-                                },
-                                json={"prompt": prompt_text},
-                                timeout=60,
+                            resp = oai.chat.completions.create(
+                                model=model_used,
+                                messages=messages,
+                                max_tokens=300,
                             )
                             lat = int((time.time() - t0) * 1000)
-                            r.raise_for_status()
-                            data = r.json()
-
-                            # ── Parse — Pluralsight returns two possible shapes:
-                            #   OpenAI-routed:  {"message": {"role":"assistant","content":"..."}, "inputTokens": N, ...}
-                            #   Claude-routed:  {"message": "...string..."}
-                            msg_field = data.get("message")
-                            if isinstance(msg_field, dict):
-                                answer_text = msg_field.get("content", "") or ""
-                            elif isinstance(msg_field, str):
-                                answer_text = msg_field
-                            else:
-                                answer_text = str(msg_field) if msg_field is not None else "(empty response)"
-
-                            in_tok  = int(data.get("inputTokens", 0)  or 0)
-                            out_tok = int(data.get("outputTokens", 0) or 0)
-                            cost    = float(data.get("cost", 0)       or 0)
-                            total_tokens = in_tok + out_tok
 
                             # ── Feed metrics back to LD for AI experimentation.
-                            # LD AI tracker expects OpenAI-shaped token fields — shim it.
+                            # OpenAI's usage object already has the field names the
+                            # LD AI tracker expects (prompt_tokens / completion_tokens
+                            # / total_tokens), so we can pass it through directly.
                             try:
-                                usage_shim = SimpleNamespace(
-                                    prompt_tokens     = in_tok,
-                                    completion_tokens = out_tok,
-                                    total_tokens      = total_tokens,
-                                )
                                 tracker.track_duration(lat)
-                                tracker.track_tokens(usage_shim)
+                                tracker.track_tokens(resp.usage)
                                 tracker.track_success()
                             except Exception:
                                 pass
 
+                            answer_text  = resp.choices[0].message.content
+                            total_tokens = resp.usage.total_tokens
+
                             st.markdown(f"""
                             <div class="card" style='margin-bottom:10px;'>
                                 <div style='font-size:10px;color:#64748b;font-family:"JetBrains Mono",monospace;margin-bottom:8px;'>
-                                    model: {model_slug} · via Pluralsight Sandbox · metrics → LD</div>
+                                    model: {model_used} · metrics → LD</div>
                                 <div style='font-size:14px;color:#c7d2fe;line-height:1.7;white-space:pre-wrap;'>{answer_text}</div>
                             </div>
                             """, unsafe_allow_html=True)
-                            m1,m2,m3,m4 = st.columns(4)
-                            m1.metric("Model",   model_slug)
-                            m2.metric("Tokens",  total_tokens if total_tokens else "—")
+                            m1,m2,m3 = st.columns(3)
+                            m1.metric("Model",   model_used)
+                            m2.metric("Tokens",  total_tokens)
                             m3.metric("Latency", f"{lat}ms")
-                            m4.metric("Cost",    f"${cost:.4f}" if cost else "—")
-                        except requests.HTTPError as e:
-                            code = e.response.status_code
-                            if code == 404:
-                                st.error(
-                                    f"HTTP 404 — the Pluralsight endpoint for `{model_slug}` "
-                                    f"isn't mounted in your sandbox. Try a different model slug in "
-                                    f"the LD AI Config. **`claude-4-sonnet` is the only slug with "
-                                    f"a verified working example in the docs.** Other safe bets: "
-                                    f"`chatgpt-4o`, `gemini-25-flash`."
-                                )
-                                st.caption(f"Endpoint that returned 404: `{endpoint}`")
-                            elif code in (401, 403):
-                                st.error(f"HTTP {code} — `PLURALSIGHT_API_KEY` is missing, expired, or unauthorized for this model.")
-                            else:
-                                st.error(f"HTTP {code} from Pluralsight: {e.response.text[:300]}")
                         except Exception as e:
                             st.error(f"AI error: {e}")
 
             st.markdown("""
             <div class="mono" style='margin-top:14px;'>
-<span style='color:#94a3b8;'># AI Config — LD returns the model slug; we map → Pluralsight URL:</span><br/>
+<span style='color:#94a3b8;'># AI Config — same pattern as feature flags, plus metric tracking:</span><br/>
 ai_config, tracker = ai.config(<br/>
 &nbsp;&nbsp;<span style='color:#fbbf24;'>"support-assistant"</span>, context, fallback,<br/>
-&nbsp;&nbsp;{<span style='color:#fbbf24;'>"user_question"</span>: user_q}<br/>
-)<br/>
-model_slug = ai_config.model.name                <span style='color:#94a3b8;'># e.g. "claude-45-sonnet"</span><br/>
-endpoint   = PLURALSIGHT_ENDPOINTS[model_slug]<br/>
+&nbsp;&nbsp;{<span style='color:#fbbf24;'>"user_question"</span>: user_q})<br/>
 <br/>
-<span style='color:#94a3b8;'># Single HTTP POST — Pluralsight handles the provider routing:</span><br/>
-r = requests.post(endpoint,<br/>
-&nbsp;&nbsp;headers={<span style='color:#fbbf24;'>"Authorization"</span>: <span style='color:#fbbf24;'>f"Bearer {PLURALSIGHT_API_KEY}"</span>},<br/>
-&nbsp;&nbsp;json={<span style='color:#fbbf24;'>"prompt"</span>: prompt_text})<br/>
+<span style='color:#94a3b8;'># Model + prompt come from LD — not from this code:</span><br/>
+resp = oai.chat.completions.create(<br/>
+&nbsp;&nbsp;model=ai_config.model.name,<br/>
+&nbsp;&nbsp;messages=ai_config.messages + [user_turn])<br/>
 <br/>
 <span style='color:#94a3b8;'># Metrics flow back to LD per variation:</span><br/>
 tracker.track_duration(latency_ms)<br/>
-tracker.track_tokens(usage_shim)<br/>
+tracker.track_tokens(resp.usage)<br/>
 tracker.track_success()
             </div>
             """, unsafe_allow_html=True)
@@ -1248,7 +1186,7 @@ tracker.track_success()
         with col_a2:
             st.markdown("""<div class="card"><div style='font-size:10px;font-weight:700;color:#94a3b8;letter-spacing:.1em;text-transform:uppercase;font-family:"JetBrains Mono",monospace;margin-bottom:14px;'>What AI Configs control</div>""", unsafe_allow_html=True)
             for icon, title, desc in [
-                ("🧠","Model selection",  "Cross-provider routing — Claude for one tier, GPT-4o or Gemini for another — one click in LD"),
+                ("🧠","Model selection",  "GPT-4o for enterprise, GPT-4o-mini for free — targeting rule, no code"),
                 ("📝","System prompt",    "Rewrite the assistant's persona from the LD dashboard instantly"),
                 ("🌡️","Temperature",      "Adjust creativity per user segment, no deployment"),
                 ("💰","Cost control",     "Route to cheaper models for non-paying users automatically"),
@@ -1269,10 +1207,9 @@ tracker.track_success()
                     <div style='font-size:12px;color:#818cf8;line-height:1.6;'>
                         <strong>Setup in LD:</strong> Create → AI Configs →
                         name it <code>{AI_CONFIG_KEY}</code> → two variations:<br/>
-                        Enterprise: <code>claude-4-sonnet</code>, detailed prompt<br/>
-                        Free: <code>chatgpt-4o</code>, concise prompt<br/>
-                        Rule: IF tier = enterprise → enterprise variation<br/>
-                        <em style='color:#64748b;'>404? That slug isn't provisioned in your sandbox — try another.</em>
+                        Enterprise: <code>gpt-4o</code>, detailed prompt<br/>
+                        Free: <code>gpt-4o-mini</code>, concise prompt<br/>
+                        Rule: IF tier = enterprise → enterprise variation
                     </div>
                 </div>
             </div>
@@ -1418,267 +1355,3 @@ with tab4:
     </div>
     """, unsafe_allow_html=True)
 
-
-# ──────────────────────────────────────────────────────────────────────────
-# ARCHITECTURE — Client vs Server SDKs · Microservices · Relay Proxy
-# Conceptual tab that pre-answers the "but what about at scale?" question
-# every VP of Engineering asks within 90 seconds of seeing the demo.
-# ──────────────────────────────────────────────────────────────────────────
-with tab5:
-    st.markdown('<div class="chip">🏗️ ARCHITECTURE · How this scales beyond a single app</div>', unsafe_allow_html=True)
-
-    arch_a, arch_b, arch_c = st.tabs([
-        "SDKs · Client vs Server",
-        "Microservices fan-out",
-        "Relay Proxy",
-    ])
-
-    # ── Sub-tab A: Client-side vs Server-side SDKs ────────────────────
-    with arch_a:
-        st.markdown("""
-        <div class="card-accent" style='margin-bottom:14px;'>
-            <div style='font-size:13px;color:#cbd5e1;line-height:1.7;'>
-                Same LaunchDarkly project, same flag definitions — but the SDK pattern
-                changes depending on where the flag is evaluated.
-                <strong>Server-side</strong> pulls all rules into process memory and
-                evaluates locally; fast and secure, but rule definitions sit on the box.
-                <strong>Client-side</strong> requests a single user's evaluated values
-                from LD's edge — the browser bundle never sees rule names like
-                <code style='color:#818cf8;'>"enterprise-pricing-rule"</code>.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        c1, c2 = st.columns(2)
-        with c1:
-            st.markdown("""
-            <div class="card" style='height:100%;'>
-                <div style='font-size:11px;color:#a5b4fc;letter-spacing:.1em;
-                            text-transform:uppercase;font-family:"JetBrains Mono",monospace;
-                            margin-bottom:8px;'>Server-side SDK</div>
-                <div style='font-size:18px;font-weight:700;color:#e2e8f0;margin-bottom:8px;'>Backend services</div>
-                <div style='font-size:12px;color:#cbd5e1;line-height:1.6;margin-bottom:12px;'>
-                    Python, Java, Go, Node, .NET, Ruby. <strong>What this demo uses.</strong><br/><br/>
-                    <strong>Auth:</strong> SDK Key — treated like a database password<br/>
-                    <strong>Rules:</strong> all rules cached in process memory<br/>
-                    <strong>Latency:</strong> &lt;5 ms per evaluation (in-memory)
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            st.markdown("""
-            <div class="mono" style='font-size:11px;margin-top:10px;'>
-<span style='color:#94a3b8;'># Python — what this demo uses</span><br/>
-ldclient.set_config(Config(<span style='color:#fbbf24;'>LD_SDK_KEY</span>))<br/>
-ld = ldclient.get()<br/>
-<br/>
-context = Context.builder(<span style='color:#fbbf24;'>"alice"</span>)<br/>
-&nbsp;&nbsp;.set(<span style='color:#a5b4fc;'>"tier"</span>, <span style='color:#fbbf24;'>"free"</span>).build()<br/>
-<br/>
-show = ld.variation(<br/>
-&nbsp;&nbsp;<span style='color:#a5b4fc;'>"new-hero-banner"</span>, context, <span style='color:#f87171;'>False</span>)
-            </div>
-            """, unsafe_allow_html=True)
-
-        with c2:
-            st.markdown("""
-            <div class="card" style='height:100%;'>
-                <div style='font-size:11px;color:#a5b4fc;letter-spacing:.1em;
-                            text-transform:uppercase;font-family:"JetBrains Mono",monospace;
-                            margin-bottom:8px;'>Client-side SDK</div>
-                <div style='font-size:18px;font-weight:700;color:#e2e8f0;margin-bottom:8px;'>Browsers &amp; mobile apps</div>
-                <div style='font-size:12px;color:#cbd5e1;line-height:1.6;margin-bottom:12px;'>
-                    JavaScript, React, iOS, Android, Flutter, React Native.<br/><br/>
-                    <strong>Auth:</strong> Client-side ID — safe to expose in a JS bundle<br/>
-                    <strong>Rules:</strong> only this user's evaluated values, never rule definitions<br/>
-                    <strong>Latency:</strong> &lt;30 ms cold; instant after init
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            st.markdown("""
-            <div class="mono" style='font-size:11px;margin-top:10px;'>
-<span style='color:#94a3b8;'>// JavaScript — what a browser app uses</span><br/>
-const ld = LDClient.initialize(<br/>
-&nbsp;&nbsp;<span style='color:#fbbf24;'>"CLIENT_SIDE_ID"</span>,<br/>
-&nbsp;&nbsp;{ kind:<span style='color:#fbbf24;'>"user"</span>, key:<span style='color:#fbbf24;'>"alice"</span>,<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;tier:<span style='color:#fbbf24;'>"free"</span> });<br/>
-<br/>
-ld.on(<span style='color:#fbbf24;'>"ready"</span>, () =&gt; {<br/>
-&nbsp;&nbsp;const show = ld.variation(<br/>
-&nbsp;&nbsp;&nbsp;&nbsp;<span style='color:#a5b4fc;'>"new-hero-banner"</span>, <span style='color:#f87171;'>false</span>);<br/>
-});
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("**Side-by-side comparison**")
-        st.markdown("""
-        <table class="compare-table">
-            <tr><th>Attribute</th><th>Server-side SDK</th><th>Client-side SDK</th></tr>
-            <tr><td class="attr">Auth credential</td><td>SDK Key (secret)</td><td>Client-side ID (public)</td></tr>
-            <tr><td class="attr">Rule data on device</td><td>All rules in memory</td><td>Only this user's evaluated values</td></tr>
-            <tr><td class="attr">Why the distinction</td><td>Backend is trusted; bandwidth is fine</td><td>Don't leak rule names; keep bundle small</td></tr>
-            <tr><td class="attr">Connection</td><td>Streaming SSE</td><td>Streaming SSE (or polling on cellular)</td></tr>
-            <tr><td class="attr">When to use</td><td>Backend services, batch jobs, cron</td><td>Browser, mobile, IoT, edge</td></tr>
-        </table>
-        """, unsafe_allow_html=True)
-
-    # ── Sub-tab B: Microservices fan-out ──────────────────────────────
-    with arch_b:
-        st.markdown("""
-        <div class="card-accent" style='margin-bottom:14px;'>
-            <div style='font-size:13px;color:#cbd5e1;line-height:1.7;'>
-                Pulse runs 50+ microservices in production: auth, billing, checkout,
-                workout generation, email, notifications, search. Each one runs its own
-                LaunchDarkly SDK instance — same flag keys, same context shape, same
-                one-line evaluation. Toggle a flag once in LD and
-                <strong>every service receives the update via streaming SSE in under
-                200 ms.</strong> No redeploy, no cascade, no service-by-service rollout.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown("""
-        <div class="topology">
-            <div class="topology-row">
-                <div class="topology-node">Auth</div>
-                <div class="topology-node">Billing</div>
-                <div class="topology-node">Checkout</div>
-                <div class="topology-node">Workouts</div>
-                <div class="topology-node">Notifications</div>
-            </div>
-            <div class="topology-label">↓ &nbsp;each service holds its own streaming SDK connection &nbsp;↓</div>
-            <div class="topology-node ld">LaunchDarkly · single source of truth</div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        c1, c2 = st.columns([3, 2])
-        with c1:
-            st.markdown("**The code in every one of those services is identical:**")
-            st.markdown("""
-            <div class="mono">
-ldclient.set_config(Config(<span style='color:#fbbf24;'>LD_SDK_KEY</span>))<br/>
-context = Context.builder(user_id)<br/>
-&nbsp;&nbsp;.set(<span style='color:#a5b4fc;'>"tier"</span>, tier).build()<br/>
-<br/>
-<span style='color:#94a3b8;'># Same flag, same answer, in every service —</span><br/>
-<span style='color:#94a3b8;'># LD guarantees consistency across the fleet.</span><br/>
-show = ld.variation(<span style='color:#a5b4fc;'>"new-hero-banner"</span>, context, <span style='color:#f87171;'>False</span>)
-            </div>
-            """, unsafe_allow_html=True)
-        with c2:
-            st.markdown("""
-            <div class="card" style='height:100%;'>
-                <div style='font-size:11px;color:#a5b4fc;letter-spacing:.1em;
-                            text-transform:uppercase;font-family:"JetBrains Mono",monospace;
-                            margin-bottom:8px;'>Demo talking points</div>
-                <ul style='font-size:12px;color:#cbd5e1;line-height:1.7;padding-left:18px;margin:0;'>
-                    <li>Same SDK pattern in every language we use</li>
-                    <li>Consistency: one flag value across 50 services</li>
-                    <li>Propagation: ≤200 ms via SSE streaming</li>
-                    <li>Resilience: each service caches rules locally; LD outage = features freeze, never break</li>
-                    <li>Audit: every flag change attributes to a user across the whole estate</li>
-                </ul>
-            </div>
-            """, unsafe_allow_html=True)
-
-    # ── Sub-tab C: Relay Proxy ────────────────────────────────────────
-    with arch_c:
-        st.markdown("""
-        <div class="card-accent" style='margin-bottom:14px;'>
-            <div style='font-size:13px;color:#cbd5e1;line-height:1.7;'>
-                The <strong>LaunchDarkly Relay Proxy</strong> is a small Go service you
-                run inside your own infrastructure. It aggregates the streaming connection
-                to LD so your N microservice instances all talk to the Relay instead of
-                the LD edge. Optional — but worth deploying once you hit one of three
-                triggers below.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown("**Three reasons teams deploy the Relay Proxy:**")
-        r1, r2, r3 = st.columns(3)
-        for col, icon, title, body in [
-            (r1, "📉", "Egress reduction",
-             "500 services × 1 connection each = 500 outbound connections. With Relay it's 1. Significant cost saver at scale."),
-            (r2, "🔒", "Data residency",
-             "Some regulators require flag-evaluation traffic to stay inside your VPC. Relay sits in your network; your services never call app.launchdarkly.com directly."),
-            (r3, "⚡", "Cold-start speed",
-             "New service pods initialise from a hot in-network Relay in &lt;100 ms instead of pulling the full ruleset from LD's edge."),
-        ]:
-            with col:
-                st.markdown(f"""
-                <div class="card" style='height:100%;'>
-                    <div style='font-size:24px;margin-bottom:6px;'>{icon}</div>
-                    <div style='font-size:13px;font-weight:700;color:#c7d2fe;margin-bottom:6px;'>{title}</div>
-                    <div style='font-size:12px;color:#cbd5e1;line-height:1.6;'>{body}</div>
-                </div>
-                """, unsafe_allow_html=True)
-
-        st.markdown("**Before vs after:**")
-        b1, b2 = st.columns(2)
-        with b1:
-            st.markdown("""
-            <div class="topology">
-                <div style='font-size:11px;color:#f87171;font-family:"JetBrains Mono",monospace;
-                            letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;'>
-                    Direct · N outbound connections
-                </div>
-                <div class="topology-row">
-                    <div class="topology-node">Svc 1</div>
-                    <div class="topology-node">Svc 2</div>
-                    <div class="topology-node">Svc 3</div>
-                    <div class="topology-node">...</div>
-                    <div class="topology-node">Svc N</div>
-                </div>
-                <div class="topology-label">↓ &nbsp;N independent streaming connections &nbsp;↓</div>
-                <div class="topology-node ld">LaunchDarkly (external)</div>
-            </div>
-            """, unsafe_allow_html=True)
-        with b2:
-            st.markdown("""
-            <div class="topology">
-                <div style='font-size:11px;color:#4ade80;font-family:"JetBrains Mono",monospace;
-                            letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;'>
-                    Via Relay · 1 outbound connection
-                </div>
-                <div class="topology-row">
-                    <div class="topology-node">Svc 1</div>
-                    <div class="topology-node">Svc 2</div>
-                    <div class="topology-node">Svc 3</div>
-                    <div class="topology-node">...</div>
-                    <div class="topology-node">Svc N</div>
-                </div>
-                <div class="topology-label">↓ &nbsp;internal traffic only &nbsp;↓</div>
-                <div class="topology-node relay">LD Relay Proxy<br/><span style='font-size:10px;font-weight:400;'>in your VPC</span></div>
-                <div class="topology-label">↓ &nbsp;1 outbound connection &nbsp;↓</div>
-                <div class="topology-node ld">LaunchDarkly (external)</div>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("**The code change to point services at the Relay — one line:**")
-        st.markdown("""
-        <div class="mono">
-<span style='color:#94a3b8;'># Before — direct to LD's edge</span><br/>
-ldclient.set_config(Config(LD_SDK_KEY))<br/>
-<br/>
-<span style='color:#94a3b8;'># After — through the Relay in your VPC</span><br/>
-ldclient.set_config(Config(<br/>
-&nbsp;&nbsp;LD_SDK_KEY,<br/>
-&nbsp;&nbsp;stream_uri=<span style='color:#fbbf24;'>"https://relay.internal.pulse-prod"</span>,<br/>
-&nbsp;&nbsp;events_uri=<span style='color:#fbbf24;'>"https://relay.internal.pulse-prod"</span><br/>
-))
-        </div>
-        """, unsafe_allow_html=True)
-
-        st.markdown("""
-        <div class="card" style='margin-top:18px;border-color:#f59e0b44;'>
-            <div style='font-size:11px;color:#fbbf24;letter-spacing:.1em;
-                        text-transform:uppercase;font-family:"JetBrains Mono",monospace;
-                        margin-bottom:8px;'>When you don't need the Relay</div>
-            <div style='font-size:12px;color:#cbd5e1;line-height:1.6;'>
-                If you run fewer than ~50 SDK instances total, you don't have data
-                residency requirements, and cold-start latency isn't a pain point —
-                <strong>just connect direct.</strong> Don't add operational complexity
-                you don't need.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
