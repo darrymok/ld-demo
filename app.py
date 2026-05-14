@@ -1,40 +1,3 @@
-"""
-╔══════════════════════════════════════════════════════════════════════╗
-║   LaunchDarkly SE Technical Exercise — Darryl Mok · APJ FY27        ║
-║   Pulse · Fitness Performance Platform                                ║
-╠══════════════════════════════════════════════════════════════════════╣
-║  SETUP:                                                              ║
-║    pip install -r requirements.txt                                   ║
-║    export LD_SDK_KEY="sdk-your-key-here"        ← REPLACE THIS       ║
-║    export OPENAI_API_KEY="sk-..."               ← optional, Part 3   ║
-║    streamlit run app.py                                              ║
-╠══════════════════════════════════════════════════════════════════════╣
-║  FLAGS TO CREATE IN YOUR LD PROJECT (Test environment):              ║
-║    new-hero-banner     Boolean   Part 1 — Release & Remediate        ║
-║    checkout-redesign   Boolean   Part 2 — Targeting + Part 3 Expt    ║
-║    promotional-banner  String    Part 2 — String-flag demo           ║
-║    support-assistant   AI Config Part 3 — AI Configs (optional)      ║
-╠══════════════════════════════════════════════════════════════════════╣
-║  TRIGGER SETUP (Part 1 Remediate):                                   ║
-║    LD Dashboard → new-hero-banner → Triggers tab                     ║
-║    → Add trigger → Generic trigger → copy URL → run:                 ║
-║    curl -X POST "<your-trigger-url>"                                 ║
-╠══════════════════════════════════════════════════════════════════════╣
-║  TARGETING RULES (Part 2 — checkout-redesign):                       ║
-║    Individual targets: alice, carol                                  ║
-║    Rule 1: IF tier = "enterprise" → TRUE                             ║
-║    Rule 2: IF betaTester = true → TRUE                               ║
-║    Default rule: FALSE                                               ║
-║  STRING FLAG (promotional-banner):                                   ║
-║    Rule: IF tier = "free" → "Upgrade to Pro — ship 9x faster!"       ║
-║    Default: "" (empty string)                                        ║
-╠══════════════════════════════════════════════════════════════════════╣
-║  EXPERIMENT METRIC (Part 3 bonus):                                   ║
-║    Create custom metric "purchase-clicked" (numeric, sum)            ║
-║    Create experiment on checkout-redesign with that metric           ║
-║    This app emits ld.track("purchase-clicked", ctx, metric_value)    ║
-╚══════════════════════════════════════════════════════════════════════╝
-"""
 
 from __future__ import annotations
 
@@ -314,6 +277,25 @@ hr                                               { border-color:#1a1a30 !importa
     font-size:11px;color:#64748b;margin-bottom:6px;
 }
 .changelog b { color:#a5b4fc; }
+
+/* ── Streamlit expander — themed to match dark cards ── */
+[data-testid="stExpander"] details {
+    background: #0c0c1e !important;
+    border: 1px solid #2d2d50 !important;
+    border-radius: 10px !important;
+    margin: 8px 0 !important;
+}
+[data-testid="stExpander"] summary {
+    color: #c7d2fe !important;
+    font-size: 14px !important;
+    padding: 14px 18px !important;
+    border-radius: 10px !important;
+}
+[data-testid="stExpander"] summary:hover {
+    background: #11113a !important;
+}
+[data-testid="stExpander"] summary p { color: #c7d2fe !important; font-weight: 500 !important; }
+[data-testid="stExpander"] [data-testid="stExpanderDetails"] { padding: 4px 14px 14px !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -604,56 +586,56 @@ with tab1:
             """, unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
 
-    # ── REMEDIATE via TRIGGER ─────────────────────────────────────────────
+    # ── REMEDIATE via TRIGGER  (collapsed by default — click to expand) ───
     st.divider()
-    st.markdown('<div class="chip">🔧 REMEDIATE · Trigger — disable without code change or redeploy</div>', unsafe_allow_html=True)
-    col_t1, col_t2 = st.columns([3, 2])
-    with col_t1:
-        st.markdown(f"""
-        <div class="trigger">
-            <div style='font-size:13px;font-weight:600;color:#a78bfa;margin-bottom:10px;'>📡 Trigger setup</div>
-            <div style='font-size:12px;color:#64748b;line-height:1.8;margin-bottom:12px;'>
-                1. LD Dashboard → Feature Flags → <code style='color:#a78bfa;'>{FLAG_HERO}</code><br/>
-                2. Triggers tab → Add trigger → Generic trigger<br/>
-                3. Copy the webhook URL → run the curl below
+    with st.expander("🔧  **Remediate · Trigger** — disable without code change or redeploy", expanded=False):
+        col_t1, col_t2 = st.columns([3, 2])
+        with col_t1:
+            st.markdown(f"""
+            <div class="trigger">
+                <div style='font-size:13px;font-weight:600;color:#a78bfa;margin-bottom:10px;'>📡 Trigger setup</div>
+                <div style='font-size:12px;color:#64748b;line-height:1.8;margin-bottom:12px;'>
+                    1. LD Dashboard → Feature Flags → <code style='color:#a78bfa;'>{FLAG_HERO}</code><br/>
+                    2. Triggers tab → Add trigger → Generic trigger<br/>
+                    3. Copy the webhook URL → run the curl below
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown("""
-        <div class="mono">
+            """, unsafe_allow_html=True)
+            st.markdown("""
+            <div class="mono">
 <span style='color:#94a3b8;'># Simulate automated incident response:</span><br/>
 <span style='color:#4ade80;'>curl</span> -X POST <span style='color:#fbbf24;'>"https://app.launchdarkly.com/webhook/triggers/&lt;url&gt;"</span><br/><br/>
 <span style='color:#94a3b8;'># Flag OFF instantly. No code. No redeploy.</span><br/>
 <span style='color:#94a3b8;'># In prod: PagerDuty/Datadog fires this when error rate spikes.</span>
-        </div>
-        """, unsafe_allow_html=True)
-    with col_t2:
-        st.markdown("""
-        <div class="card">
-            <div style='font-size:13px;font-weight:600;color:#a78bfa;margin-bottom:10px;'>Impact comparison</div>
-            <div style='font-size:13px;color:#94a3b8;line-height:1.8;margin-bottom:12px;'>
-                <strong style='color:#64748b;'>Traditional:</strong><br/>
-                detect → wake engineer → fix → deploy<br/>
-                <span style='color:#f87171;'>30–60 min user impact</span>
             </div>
-            <div style='font-size:13px;color:#94a3b8;line-height:1.8;'>
-                <strong style='color:#64748b;'>With LD trigger:</strong><br/>
-                detect → webhook fires → flag OFF<br/>
-                <span style='color:#4ade80;'>2 seconds additional impact</span>
+            """, unsafe_allow_html=True)
+        with col_t2:
+            st.markdown("""
+            <div class="card">
+                <div style='font-size:13px;font-weight:600;color:#a78bfa;margin-bottom:10px;'>Impact comparison</div>
+                <div style='font-size:13px;color:#94a3b8;line-height:1.8;margin-bottom:12px;'>
+                    <strong style='color:#64748b;'>Traditional:</strong><br/>
+                    detect → wake engineer → fix → deploy<br/>
+                    <span style='color:#f87171;'>30–60 min user impact</span>
+                </div>
+                <div style='font-size:13px;color:#94a3b8;line-height:1.8;'>
+                    <strong style='color:#64748b;'>With LD trigger:</strong><br/>
+                    detect → webhook fires → flag OFF<br/>
+                    <span style='color:#4ade80;'>2 seconds additional impact</span>
+                </div>
             </div>
-        </div>
-        """, unsafe_allow_html=True)
+            """, unsafe_allow_html=True)
 
-    st.markdown("""
-    <div class="mono" style='margin-top:8px;'>
+        st.markdown("""
+        <div class="mono" style='margin-top:8px;'>
 <span style='color:#94a3b8;'># The complete LD integration — 5 lines, including the listener:</span><br/>
 ldclient.set_config(Config(<span style='color:#fbbf24;'>LD_SDK_KEY</span>))                             <span style='color:#94a3b8;'># 1. connect</span><br/>
 ld.flag_tracker.add_listener(<span style='color:#a5b4fc;'>on_change</span>)                          <span style='color:#94a3b8;'># 2. listen</span><br/>
 context = Context.builder(<span style='color:#fbbf24;'>user_key</span>).set(<span style='color:#a5b4fc;'>"tier"</span>, tier).build()   <span style='color:#94a3b8;'># 3. context</span><br/>
 show = ld.variation(<span style='color:#a5b4fc;'>"new-hero-banner"</span>, context, <span style='color:#f87171;'>False</span>)            <span style='color:#94a3b8;'># 4. evaluate</span><br/>
 <span style='color:#818cf8;'>if</span> show: render_new_experience()                                    <span style='color:#94a3b8;'># 5. react</span>
-    </div>
-    """, unsafe_allow_html=True)
+        </div>
+        """, unsafe_allow_html=True)
 
 
 # ──────────────────────────────────────────────────────────────────────────
@@ -1354,4 +1336,3 @@ with tab4:
 <span style='color:#94a3b8;'># 5. Next evaluation immediately uses the new rule</span>
     </div>
     """, unsafe_allow_html=True)
-
