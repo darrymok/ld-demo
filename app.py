@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import os
@@ -807,13 +806,12 @@ with tab2:
 
 
 # ──────────────────────────────────────────────────────────────────────────
-# PART 3 — BONUS (Experimentation · AI Configs · Integrations)
+# PART 3 — BONUS (Experimentation · AI Configs)
 # ──────────────────────────────────────────────────────────────────────────
 with tab3:
-    exp_tab, ai_tab, int_tab = st.tabs([
+    exp_tab, ai_tab = st.tabs([
         "Option A — Experimentation",
         "Option B — AI Configs",
-        "Integrations",
     ])
 
     # ── EXPERIMENTATION ──────────────────────────────────────────────────
@@ -1193,69 +1191,6 @@ tracker.track_success()
                         Free: <code>gpt-4o-mini</code>, concise prompt<br/>
                         Rule: IF tier = enterprise → enterprise variation
                     </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-
-    # ── INTEGRATIONS ─────────────────────────────────────────────────────
-    with int_tab:
-        st.markdown('<div class="chip">🔌 INTEGRATIONS · Where LaunchDarkly fits in your existing stack</div>', unsafe_allow_html=True)
-        st.markdown("""
-        <div class="card-accent" style='margin-bottom:14px;'>
-            <div style='font-size:14px;color:#94a3b8;line-height:1.7;'>
-                LaunchDarkly doesn't live in a silo — every flag change can fan out to
-                the tools your team already runs in. The result: release decisions and
-                incident response stay inside the workflows engineers already trust.
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-        i1, i2, i3 = st.columns(3)
-        for col, icon, name, items in [
-            (i1, "💬", "Slack", [
-                "Flag-change notifications → #releases channel",
-                "Slash-command approvals for risky flags",
-                "On-call ping the moment a kill-switch fires",
-            ]),
-            (i2, "🎫", "Jira", [
-                "Auto-create rollback tickets when a flag is killed",
-                "Link experiment results to the originating story",
-                "Cleanup workflow for stale / archived flags",
-            ]),
-            (i3, "📈", "Datadog / New Relic", [
-                "Annotate dashboards on every release",
-                "Auto-fire flag-off when SLO breaches",
-                "Correlate error spikes to specific variations",
-            ]),
-        ]:
-            with col:
-                items_html = "".join(
-                    f"<div style='font-size:12px;color:#64748b;line-height:1.7;margin-bottom:6px;'>"
-                    f"<span style='color:#4ade80;'>•</span>&nbsp;{x}</div>"
-                    for x in items
-                )
-                st.markdown(f"""
-                <div class="card" style='height:100%;'>
-                    <div style='font-size:24px;margin-bottom:8px;'>{icon}</div>
-                    <div style='font-size:14px;font-weight:700;color:#c7d2fe;margin-bottom:10px;'>{name}</div>
-                    {items_html}
-                </div>
-                """, unsafe_allow_html=True)
-
-        st.markdown('<div class="chip" style="margin-top:18px;">🔄 THE COMPLETE LOOP · Release-and-remediate without leaving Slack</div>', unsafe_allow_html=True)
-        for n, color, title, desc in [
-            ("1","#818cf8","Engineer ships code",      "Flag still OFF — zero customer impact."),
-            ("2","#4ade80","Engineer toggles flag ON", "Slack #releases auto-announces with audit trail."),
-            ("3","#f59e0b","Datadog detects error spike", "Webhook fires the LD trigger URL automatically."),
-            ("4","#ef4444","Flag flips OFF instantly",   "Jira ticket auto-opens. Customers unaffected."),
-            ("5","#a78bfa","Engineer iterates + ships fix", "Toggles flag ON again. Zero incident time recorded."),
-        ]:
-            st.markdown(f"""
-            <div class="tl-item" style='margin-bottom:10px;'>
-                <div class="tl-num" style='background:{color}18;border:1px solid {color}44;color:{color};'>{n}</div>
-                <div>
-                    <div class="tl-title">{title}</div>
-                    <div class="tl-desc">{desc}</div>
                 </div>
             </div>
             """, unsafe_allow_html=True)
