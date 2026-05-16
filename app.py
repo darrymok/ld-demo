@@ -1,3 +1,41 @@
+"""
+╔══════════════════════════════════════════════════════════════════════╗
+║   LaunchDarkly SE Technical Exercise — Darryl Mok · APJ FY27        ║
+║   Pulse · Fitness Performance Platform                                ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  SETUP:                                                              ║
+║    pip install -r requirements.txt                                   ║
+║    export LD_SDK_KEY="sdk-your-key-here"        ← REPLACE THIS       ║
+║    export OPENAI_API_KEY="sk-..."               ← optional, Part 3   ║
+║    streamlit run app.py                                              ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  FLAGS TO CREATE IN YOUR LD PROJECT (Test environment):              ║
+║    new-hero-banner     Boolean   Part 1 — Release & Remediate        ║
+║    checkout-redesign   Boolean   Part 2 — Targeting + Part 3 Expt    ║
+║    promotional-banner  String    Part 2 — String-flag demo           ║
+║    support-assistant   AI Config Part 3 — AI Configs (optional)      ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  TRIGGER SETUP (Part 1 Remediate):                                   ║
+║    LD Dashboard → new-hero-banner → Triggers tab                     ║
+║    → Add trigger → Generic trigger → copy URL → run:                 ║
+║    curl -X POST "<your-trigger-url>"                                 ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  TARGETING RULES (Part 2 — checkout-redesign):                       ║
+║    Individual targets: alice, carol                                  ║
+║    Rule 1: IF tier = "enterprise" → TRUE                             ║
+║    Rule 2: IF betaTester = true → TRUE                               ║
+║    Default rule: FALSE                                               ║
+║  STRING FLAG (promotional-banner):                                   ║
+║    Rule: IF tier = "free" → "Upgrade to Pro — ship 9x faster!"       ║
+║    Default: "" (empty string)                                        ║
+╠══════════════════════════════════════════════════════════════════════╣
+║  EXPERIMENT METRIC (Part 3 bonus):                                   ║
+║    Create custom metric "purchase-clicked" (numeric, sum)            ║
+║    Create experiment on checkout-redesign with that metric           ║
+║    This app emits ld.track("purchase-clicked", ctx, metric_value)    ║
+╚══════════════════════════════════════════════════════════════════════╝
+"""
+
 from __future__ import annotations
 
 import os
@@ -277,6 +315,67 @@ hr                                               { border-color:#1a1a30 !importa
 }
 .changelog b { color:#a5b4fc; }
 
+/* ── Chat bubbles for the AI Coach ───────────────────────────── */
+.chat-row    { display:flex;gap:12px;margin:10px 0;align-items:flex-start; }
+.chat-row.user-row  { flex-direction:row-reverse; }
+.chat-avatar { width:36px;height:36px;border-radius:50%;display:flex;align-items:center;
+               justify-content:center;font-size:20px;flex-shrink:0;
+               box-shadow:0 2px 10px rgba(0,0,0,0.4); }
+.chat-avatar.bot    { background:linear-gradient(135deg,#4f46e5,#7c3aed); }
+.chat-avatar.user   { background:linear-gradient(135deg,#0ea5e9,#06b6d4); }
+.chat-bubble { max-width:75%;padding:14px 18px;border-radius:16px;
+               font-size:14px;line-height:1.65;white-space:pre-wrap; }
+.chat-bubble.bot    { background:#0e0e1c;border:1px solid #2d2d50;color:#e2e8f0;
+                      border-top-left-radius:4px; }
+.chat-bubble.user   { background:linear-gradient(135deg,#1e1b4b,#312e81);
+                      border:1px solid #4f46e5;color:#e2e8f0;
+                      border-top-right-radius:4px; }
+.chat-meta   { font-size:10px;color:#64748b;font-family:'JetBrains Mono',monospace;
+               margin-top:8px;letter-spacing:.05em; }
+
+/* ── Big, animated feature-state indicator ───────────────────── */
+@keyframes statePulse {
+  0%,100% { box-shadow:0 0 0 0    rgba(74,222,128,0.45); }
+  50%     { box-shadow:0 0 0 14px rgba(74,222,128,0); }
+}
+@keyframes stateOff {
+  0%,100% { box-shadow:0 0 0 0    rgba(248,113,113,0.45); }
+  50%     { box-shadow:0 0 0 14px rgba(248,113,113,0); }
+}
+.feature-state {
+  display:flex;align-items:center;gap:16px;
+  padding:18px 24px;border-radius:14px;margin:0 0 16px 0;
+  font-family:'JetBrains Mono',monospace;
+}
+.feature-state.on  {
+  background:linear-gradient(135deg,#052e16,#14532d);
+  border:1px solid #22c55e;
+  animation:statePulse 2.4s ease-in-out infinite;
+}
+.feature-state.off {
+  background:linear-gradient(135deg,#2c0a0a,#3f1414);
+  border:1px solid #ef4444;
+  animation:stateOff 2.4s ease-in-out infinite;
+}
+.feature-state .icon       { font-size:28px; }
+.feature-state .label      { font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;display:block; }
+.feature-state .value      { font-size:18px;font-weight:700;display:block;margin-top:2px; }
+.feature-state.on  .value  { color:#86efac; }
+.feature-state.off .value  { color:#fca5a5; }
+.feature-state .flag-key   { font-size:11px;color:#94a3b8;margin-left:auto; }
+
+/* Stronger flash banner */
+.flag-flash {
+    background:linear-gradient(90deg,#1a1305,#3a2208) !important;
+    border:2px solid #f59e0b !important;
+    border-left:6px solid #f59e0b !important;
+    padding:18px 22px !important;
+    font-size:14px !important;
+    font-weight:600 !important;
+    color:#fde68a !important;
+    box-shadow:0 0 40px rgba(245,158,11,0.35) !important;
+}
+
 /* ── Streamlit expander — themed to match dark cards ── */
 [data-testid="stExpander"] details {
     background: #0c0c1e !important;
@@ -302,11 +401,17 @@ hr                                               { border-color:#1a1a30 !importa
 # SESSION STATE — for change detection & experiment counters
 # ══════════════════════════════════════════════════════════════════════════
 ss = st.session_state
-ss.setdefault("prev_flags",   {})
-ss.setdefault("flash_until",  0.0)
-ss.setdefault("conv_events",  0)
-ss.setdefault("kill_until",   0.0)
-ss.setdefault("session_id",   str(uuid.uuid4())[:8])
+ss.setdefault("prev_flags",       {})
+ss.setdefault("flash_until",      0.0)
+ss.setdefault("conv_events",      0)
+ss.setdefault("kill_until",       0.0)
+ss.setdefault("session_id",       str(uuid.uuid4())[:8])
+ss.setdefault("last_ai_response", None)   # survives autorefresh reruns
+ss.setdefault("last_ai_error",    None)
+ss.setdefault("last_ai_status",   None)
+ss.setdefault("last_ai_trace",    None)
+ss.setdefault("disable_autorefresh", False)
+ss.setdefault("last_ai_tracker_errors", [])
 
 # ══════════════════════════════════════════════════════════════════════════
 # SIDEBAR — User Simulator
@@ -358,14 +463,36 @@ with st.sidebar:
         help="Non-blocking poll that pairs with the SDK change listener. "
              "Toggle a flag in LD — watch this app react instantly."
     )
-    if auto_refresh and HAS_AUTOREFRESH:
-        st_autorefresh(interval=1500, key="ld_autorefresh")
+    # Skip autorefresh while an AI call is in flight — otherwise the rerun
+    # cancels the in-progress OpenAI call and the response never lands.
+    # Also respect a manual user override (set from the AI tab).
+    _ai_in_flight    = ss.get("last_ai_status") == "calling"
+    _user_paused     = ss.get("disable_autorefresh", False)
+    _refresh_active  = auto_refresh and HAS_AUTOREFRESH and not _ai_in_flight and not _user_paused
+
+    if _refresh_active:
+        # 5-second interval (was 1.5s) gives OpenAI calls time to complete
+        # before being interrupted. Flag-change detection is still fast
+        # enough for the live demo — most toggles propagate well within 5s.
+        st_autorefresh(interval=5000, key="ld_autorefresh")
         st.markdown(
             '<div style="font-size:11px;color:#4ade80;font-family:\'JetBrains Mono\',monospace;'
             'line-height:1.7;">'
             '<span class="dot-live"></span>&nbsp;Listening for flag changes<br/>'
-            'SDK stream + 1.5s poll<br/>'
+            'SDK stream + 5s poll<br/>'
             'Toggle a flag in LD →<br/>watch the UI react.</div>',
+            unsafe_allow_html=True
+        )
+    elif auto_refresh and _ai_in_flight:
+        st.markdown(
+            '<div style="font-size:11px;color:#fbbf24;font-family:\'JetBrains Mono\',monospace;'
+            'line-height:1.7;">⏸ Autorefresh paused (AI call in flight)</div>',
+            unsafe_allow_html=True
+        )
+    elif _user_paused:
+        st.markdown(
+            '<div style="font-size:11px;color:#fbbf24;font-family:\'JetBrains Mono\',monospace;'
+            'line-height:1.7;">⏸ Autorefresh paused (manual override)</div>',
             unsafe_allow_html=True
         )
     elif auto_refresh and not HAS_AUTOREFRESH:
@@ -488,17 +615,32 @@ st.divider()
 # TABS
 # ══════════════════════════════════════════════════════════════════════════
 tab1, tab2, tab3, tab4 = st.tabs([
-    "⚡ Part 1 — Release & Remediate",
-    "🎯 Part 2 — Target",
-    "🧪 Part 3 — Bonus",
-    "🔍 Flag Inspector",
+    "🏠  Home",
+    "💳  Membership",
+    "🤖  AI Coach",
+    "📊  Admin",
 ])
 
 # ──────────────────────────────────────────────────────────────────────────
 # PART 1 — RELEASE & REMEDIATE
 # ──────────────────────────────────────────────────────────────────────────
 with tab1:
-    st.markdown('<div class="chip">⚡ PART 1 · RELEASE & REMEDIATE · Flag: new-hero-banner</div>', unsafe_allow_html=True)
+    st.markdown('<div class="chip">🏠 HOME · Flag: new-hero-banner</div>', unsafe_allow_html=True)
+
+    # Big, pulsing state indicator — impossible to miss when the flag flips.
+    _state_cls = "on" if show_hero else "off"
+    _state_icon = "✦" if show_hero else "○"
+    _state_value = "NEW EXPERIENCE LIVE" if show_hero else "LEGACY EXPERIENCE"
+    st.markdown(f"""
+    <div class="feature-state {_state_cls}">
+        <div class="icon">{_state_icon}</div>
+        <div>
+            <span class="label">Feature state — live from LaunchDarkly</span>
+            <span class="value">{_state_value}</span>
+        </div>
+        <div class="flag-key">flag · new-hero-banner = {str(show_hero).upper()}</div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Live streaming indicator — driven by the real SDK listener + autorefresh
     if auto_refresh and HAS_AUTOREFRESH:
@@ -641,7 +783,7 @@ show = ld.variation(<span style='color:#a5b4fc;'>"new-hero-banner"</span>, conte
 # PART 2 — TARGET
 # ──────────────────────────────────────────────────────────────────────────
 with tab2:
-    st.markdown('<div class="chip">🎯 PART 2 · TARGET · Flag: checkout-redesign</div>', unsafe_allow_html=True)
+    st.markdown('<div class="chip">💳 MEMBERSHIP · Flag: checkout-redesign</div>', unsafe_allow_html=True)
 
     col_cx, col_rules = st.columns([3, 2])
 
@@ -810,13 +952,13 @@ with tab2:
 # ──────────────────────────────────────────────────────────────────────────
 with tab3:
     exp_tab, ai_tab = st.tabs([
-        "Option A — Experimentation",
-        "Option B — AI Configs",
+        "📊 Conversion Analytics",
+        "💬 Chat",
     ])
 
     # ── EXPERIMENTATION ──────────────────────────────────────────────────
     with exp_tab:
-        st.markdown('<div class="chip">🧪 EXPERIMENTATION · Measure conversion impact with statistical significance</div>', unsafe_allow_html=True)
+        st.markdown('<div class="chip">📊 ANALYTICS · Measure conversion impact with statistical significance</div>', unsafe_allow_html=True)
         col_e1, col_e2 = st.columns([3,2])
 
         with col_e1:
@@ -934,7 +1076,7 @@ ld.track(<br/>
 
     # ── AI CONFIGS ───────────────────────────────────────────────────────
     with ai_tab:
-        st.markdown('<div class="chip">🤖 AI CONFIGS · LLM governance — swap models and prompts without redeploying</div>', unsafe_allow_html=True)
+        st.markdown('<div class="chip">🤖 AI COACH · Powered by LaunchDarkly AI Configs — swap models and prompts without redeploying</div>', unsafe_allow_html=True)
         col_a1, col_a2 = st.columns([3,2])
 
         with col_a1:
@@ -957,11 +1099,44 @@ ld.track(<br/>
             elif not OPENAI_API_KEY:
                 st.warning("Set `OPENAI_API_KEY` environment variable to enable the live AI demo.")
             else:
+                # ── Heads-up about the autorefresh / AI-call interaction.
+                # OpenAI calls take 2-10 s. If autorefresh fires mid-call,
+                # Streamlit kills the script and the response is lost.
+                # Offer the user a one-click pause.
+                if not ss.get("disable_autorefresh", False):
+                    _c1, _c2 = st.columns([3, 1])
+                    with _c1:
+                        st.info(
+                            "💡 **Tip:** if responses don't appear, pause autorefresh — "
+                            "the 5-second poll can interrupt long OpenAI calls."
+                        )
+                    with _c2:
+                        if st.button("⏸ Pause", key="pause_autorefresh"):
+                            ss.disable_autorefresh = True
+                            st.rerun()
+                else:
+                    _c1, _c2 = st.columns([3, 1])
+                    with _c1:
+                        st.success("✅ Autorefresh paused — AI calls won't be interrupted.")
+                    with _c2:
+                        if st.button("▶ Resume", key="resume_autorefresh"):
+                            ss.disable_autorefresh = False
+                            st.rerun()
+
                 user_q = st.text_input("Ask the assistant:", placeholder="e.g. How do I add a team member?")
-                if st.button("Send →") and user_q:
+                _send_clicked = st.button("Send →")
+
+                # Surface common silent-failure cases explicitly
+                if _send_clicked and not user_q:
+                    st.warning("Type a question above first, then click Send.")
+
+                if _send_clicked and user_q:
+                    ss.last_ai_status = "calling"
                     with st.spinner("Calling OpenAI via LD AI Config..."):
                         try:
-                            oai = openai.OpenAI(api_key=OPENAI_API_KEY)
+                            # 30-second timeout so a hang doesn't leave us
+                            # stuck in "calling" state forever.
+                            oai = openai.OpenAI(api_key=OPENAI_API_KEY, timeout=30.0)
 
                             # ── Build the default config defensively. The LD AI SDK
                             # has reshuffled both the import path AND the
@@ -1107,42 +1282,170 @@ ld.track(<br/>
                                     {"role":"user","content":user_q},
                                 ]
 
-                            # ── The actual OpenAI call.
-                            t0 = time.time()
-                            resp = oai.chat.completions.create(
-                                model=model_used,
-                                messages=messages,
-                                max_tokens=300,
+                            # ── Detect reasoning models (o1 / o3 / gpt-5 family).
+                            # They spend tokens on internal reasoning BEFORE
+                            # producing any output text. A 300-token budget
+                            # gets entirely consumed by reasoning → empty
+                            # response. Bump to 4000 for reasoning models.
+                            _reasoning_prefixes = ("o1", "o3", "gpt-5")
+                            _is_reasoning = any(
+                                model_used.lower().startswith(p)
+                                for p in _reasoning_prefixes
                             )
+                            _token_budget = 4000 if _is_reasoning else 300
+
+                            # ── The actual OpenAI call.
+                            # OpenAI deprecated `max_tokens` in favour of
+                            # `max_completion_tokens` for newer models
+                            # (gpt-4o family, o1, gpt-5, etc.). Older models
+                            # like gpt-3.5-turbo still expect `max_tokens`.
+                            # Try the new name first; fall back if the model
+                            # rejects it.
+                            t0 = time.time()
+                            try:
+                                resp = oai.chat.completions.create(
+                                    model=model_used,
+                                    messages=messages,
+                                    max_completion_tokens=_token_budget,
+                                )
+                            except Exception as _e:
+                                if "max_completion_tokens" in str(_e).lower():
+                                    resp = oai.chat.completions.create(
+                                        model=model_used,
+                                        messages=messages,
+                                        max_tokens=_token_budget,
+                                    )
+                                else:
+                                    raise
                             lat = int((time.time() - t0) * 1000)
 
                             # ── Feed metrics back to LD for AI experimentation.
-                            # OpenAI's usage object already has the field names the
-                            # LD AI tracker expects (prompt_tokens / completion_tokens
-                            # / total_tokens), so we can pass it through directly.
+                            # The LD AI tracker expects token usage in a
+                            # different shape than what OpenAI returns:
+                            #   OpenAI:  total_tokens / prompt_tokens / completion_tokens
+                            #   LD AI:   total / input / output
+                            # The shim below provides BOTH naming conventions
+                            # so the tracker can pick whichever it needs.
+                            # We also try the official LD TokenUsage type first
+                            # in case the SDK does an isinstance check.
+                            _usage_obj = None
                             try:
-                                tracker.track_duration(lat)
-                                tracker.track_tokens(resp.usage)
-                                tracker.track_success()
-                            except Exception:
+                                from ldai.types import TokenUsage as _TokenUsage
+                                _usage_obj = _TokenUsage(
+                                    total=resp.usage.total_tokens,
+                                    input=resp.usage.prompt_tokens,
+                                    output=resp.usage.completion_tokens,
+                                )
+                            except (ImportError, TypeError):
                                 pass
+                            if _usage_obj is None:
+                                _usage_obj = SimpleNamespace(
+                                    # LD AI shape
+                                    total=resp.usage.total_tokens,
+                                    input=resp.usage.prompt_tokens,
+                                    output=resp.usage.completion_tokens,
+                                    # OpenAI shape (kept for compatibility)
+                                    total_tokens=resp.usage.total_tokens,
+                                    prompt_tokens=resp.usage.prompt_tokens,
+                                    completion_tokens=resp.usage.completion_tokens,
+                                )
 
-                            answer_text  = resp.choices[0].message.content
-                            total_tokens = resp.usage.total_tokens
+                            # Capture any tracker errors so we can see them in the
+                            # diagnostic expander (otherwise they'd be invisible).
+                            _tracker_errors = []
+                            for _name, _fn in [
+                                ("track_duration", lambda: tracker.track_duration(lat)),
+                                ("track_tokens",   lambda: tracker.track_tokens(_usage_obj)),
+                                ("track_success",  lambda: tracker.track_success()),
+                            ]:
+                                try:
+                                    _fn()
+                                except Exception as _te:
+                                    _tracker_errors.append(f"{_name}: {type(_te).__name__}: {_te}")
+                            # Force-flush so events reach LD immediately,
+                            # not on the next 5-second batch interval.
+                            try:
+                                ld.flush()
+                            except Exception as _fe:
+                                _tracker_errors.append(f"flush: {type(_fe).__name__}: {_fe}")
+                            ss.last_ai_tracker_errors = _tracker_errors
 
-                            st.markdown(f"""
-                            <div class="card" style='margin-bottom:10px;'>
-                                <div style='font-size:10px;color:#64748b;font-family:"JetBrains Mono",monospace;margin-bottom:8px;'>
-                                    model: {model_used} · metrics → LD</div>
-                                <div style='font-size:14px;color:#c7d2fe;line-height:1.7;white-space:pre-wrap;'>{answer_text}</div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                            m1,m2,m3 = st.columns(3)
-                            m1.metric("Model",   model_used)
-                            m2.metric("Tokens",  total_tokens)
-                            m3.metric("Latency", f"{lat}ms")
-                        except Exception as e:
-                            st.error(f"AI error: {e}")
+                            # ── Persist the response in session state so it
+                            # survives the autorefresh-driven script reruns.
+                            # Without this, the answer would render once and
+                            # vanish on the next 1.5s rerun (when the button
+                            # is no longer in its "just-clicked" state).
+                            ss.last_ai_response = {
+                                "model":   model_used,
+                                "answer":  resp.choices[0].message.content or "(empty response from model)",
+                                "tokens":  resp.usage.total_tokens,
+                                "latency": lat,
+                                "question": user_q,
+                            }
+                            ss.last_ai_error  = None
+                            ss.last_ai_status = "success"
+                        except BaseException as e:
+                            # BaseException (vs Exception) catches things like
+                            # KeyboardInterrupt / SystemExit / GeneratorExit
+                            # that Streamlit's framework can sometimes raise
+                            # when reruns are scheduled mid-call.
+                            import traceback
+                            ss.last_ai_error    = f"{type(e).__name__}: {e}"
+                            ss.last_ai_trace    = traceback.format_exc()
+                            ss.last_ai_response = None
+                            ss.last_ai_status   = "error"
+
+            # ── Render the latest response (or error) from session state,
+            # so it stays visible across autorefresh-triggered reruns.
+            if ss.last_ai_error:
+                st.error(f"AI error: {ss.last_ai_error}")
+                with st.expander("Show full traceback"):
+                    st.code(ss.get("last_ai_trace", "(no traceback captured)"), language="python")
+            elif ss.last_ai_response:
+                r = ss.last_ai_response
+                # Chat-style layout — user bubble + bot bubble with avatars
+                st.markdown(f"""
+                <div class="chat-row user-row">
+                    <div class="chat-avatar user">👤</div>
+                    <div class="chat-bubble user">{r['question']}</div>
+                </div>
+                <div class="chat-row">
+                    <div class="chat-avatar bot">🤖</div>
+                    <div>
+                        <div class="chat-bubble bot">{r['answer']}</div>
+                        <div class="chat-meta">
+                            🤖 AI Coach · model <b>{r['model']}</b> · {r['tokens']} tokens · {r['latency']} ms · metrics → LD
+                        </div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+                st.markdown("<div style='margin-top:18px;'></div>", unsafe_allow_html=True)
+                m1, m2, m3 = st.columns(3)
+                m1.metric("Model",   r["model"])
+                m2.metric("Tokens",  r["tokens"])
+                m3.metric("Latency", f"{r['latency']}ms")
+
+            # ── Diagnostic expander — collapsed by default; lets us see
+            # exactly what's in session state without breaking the demo
+            # flow if everything works.
+            with st.expander("🔍 Diagnostic info", expanded=False):
+                _tracker_errs = ss.get("last_ai_tracker_errors", [])
+                st.write({
+                    "status": ss.get("last_ai_status", "(no request made yet)"),
+                    "has_response": ss.last_ai_response is not None,
+                    "has_error":    ss.last_ai_error is not None,
+                    "openai_key_present":     bool(OPENAI_API_KEY),
+                    "ai_client_initialised":  ai is not None,
+                    "user_question_in_box":   user_q or "(empty)",
+                    "tracker_calls_ok":       len(_tracker_errs) == 0,
+                    "tracker_errors":         _tracker_errs or "(none)",
+                })
+                st.caption(
+                    "If `tracker_calls_ok` is true but you don't see metrics in "
+                    "the LD AI Config dashboard, wait 1-2 minutes — LD batches "
+                    "events. Look in the AI Config's **Monitoring** tab, not the "
+                    "main flag page."
+                )
 
             st.markdown("""
             <div class="mono" style='margin-top:14px;'>
@@ -1200,7 +1503,7 @@ tracker.track_success()
 # FLAG INSPECTOR
 # ──────────────────────────────────────────────────────────────────────────
 with tab4:
-    st.markdown('<div class="chip">🔍 FLAG INSPECTOR · Live evaluation state + SDK change log</div>', unsafe_allow_html=True)
+    st.markdown('<div class="chip">📊 ADMIN · Flag evaluations · Live SDK change log</div>', unsafe_allow_html=True)
     col_f, col_c = st.columns(2)
 
     with col_f:
